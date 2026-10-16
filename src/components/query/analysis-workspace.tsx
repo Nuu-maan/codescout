@@ -28,6 +28,7 @@ import { defaultResponseModel, getResponseModel, type ResponseModelId } from "@/
 import type { RepositorySnapshot } from "@/types/workspace";
 
 type AnalysisWorkspaceProps = {
+  openRouterKey: string;
   repository: RepositorySnapshot;
   onOpenSource: (path: string) => void;
   onOpenFiles: () => void;
@@ -52,7 +53,7 @@ const suggestions = [
   { icon: ShieldCheck, label: "Find security-sensitive code", prompt: "Find the security-sensitive code paths and explain their risks." },
 ];
 
-export function AnalysisWorkspace({ repository, onOpenSource, onOpenFiles, onChangeRepository }: AnalysisWorkspaceProps) {
+export function AnalysisWorkspace({ repository, openRouterKey, onOpenSource, onOpenFiles, onChangeRepository }: AnalysisWorkspaceProps) {
   const [runs, setRuns] = useState<QueryRun[]>([]);
   const [model, setModel] = useState<ResponseModelId>(defaultResponseModel);
   const [submitting, setSubmitting] = useState(false);
@@ -74,7 +75,10 @@ export function AnalysisWorkspace({ repository, onOpenSource, onOpenFiles, onCha
     try {
       const response = await fetch("/api/query", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(openRouterKey ? { "X-OpenRouter-Key": openRouterKey } : {}),
+        },
         body: JSON.stringify({ question, model, repository: { fullName: repository.fullName, files: repository.files } }),
       });
 
@@ -139,7 +143,7 @@ export function AnalysisWorkspace({ repository, onOpenSource, onOpenFiles, onCha
 
       <footer className="shrink-0 bg-background px-4 pb-4 pt-2 sm:px-6">
         <div className="mx-auto max-w-3xl">
-          <QueryBar repositoryName={repository.name} submitting={submitting} onSubmit={runQuery} model={model} onModelChange={setModel} />
+          <QueryBar repositoryName={repository.name} submitting={submitting} onSubmit={runQuery} model={model} onModelChange={setModel} hasPersonalKey={Boolean(openRouterKey)} />
           <p className="mt-2 text-center text-[10px] text-muted-foreground">CodeScout can make mistakes. Verify important details in the cited source files.</p>
         </div>
       </footer>

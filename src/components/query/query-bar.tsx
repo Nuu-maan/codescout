@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useState } from "react";
-import { ArrowUp, BrainCircuit, ChevronDown, GitBranch, ScanSearch } from "lucide-react";
+import { ArrowUp, BrainCircuit, ChevronDown, GitBranch, KeyRound, ScanSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,10 +20,11 @@ type QueryBarProps = {
   onSubmit: (question: string) => Promise<void>;
   model: ResponseModelId;
   onModelChange: (model: ResponseModelId) => void;
+  hasPersonalKey: boolean;
   repositoryName: string;
 };
 
-export function QueryBar({ submitting, onSubmit, model, onModelChange, repositoryName }: QueryBarProps) {
+export function QueryBar({ submitting, onSubmit, model, onModelChange, hasPersonalKey, repositoryName }: QueryBarProps) {
   const [value, setValue] = useState("");
   const selectedModel = getResponseModel(model);
 
@@ -84,6 +85,7 @@ export function QueryBar({ submitting, onSubmit, model, onModelChange, repositor
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
+        {hasPersonalKey && <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400"><KeyRound className="size-3" /> your key</span>}
         <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"><GitBranch className="size-3" /> repository context</span>
         <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"><ScanSearch className="size-3" /> Snap routing</span>
         <Button type="submit" size="icon-sm" className="ms-auto rounded-full" disabled={!value.trim() || submitting} aria-label={submitting ? "Analyzing" : "Send question"}>
