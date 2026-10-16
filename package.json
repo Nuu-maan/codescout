@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test --experimental-strip-types src/lib/repository.test.ts"
+    "test": "node --test --experimental-strip-types src/lib/*.test.ts"
   },
   "dependencies": {
     "@shadcn/react": "^0.3.1",
