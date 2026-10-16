@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Braces, Files, Plus, Settings2 } from "lucide-react";
 import { AnalysisWorkspace } from "@/components/query/analysis-workspace";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -67,6 +68,7 @@ export function WorkspaceShell() {
             <span className="hidden md:inline">{getPipelineLabel(pipelineStatus)}</span>
           </Badge>
           <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
+          <ThemeToggle />
           <Tooltip>
             <TooltipTrigger asChild><Button variant="ghost" size="icon-sm" aria-label="Repository settings"><Settings2 /></Button></TooltipTrigger>
             <TooltipContent>Repository settings</TooltipContent>
