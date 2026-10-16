@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Braces, Files, KeyRound, Plus } from "lucide-react";
+import { Braces, Files, KeyRound, Plus } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { AnalysisWorkspace } from "@/components/query/analysis-workspace";
 import { ThemeToggle } from "@/components/theme-toggle";

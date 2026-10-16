@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, FileCode2, Folder, FolderOpen } from "lucide-react";
+import { ChevronRight, FileCode2, Folder, FolderOpen } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "cn";

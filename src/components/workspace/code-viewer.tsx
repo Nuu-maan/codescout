@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, ExternalLink, FileCode2 } from "lucide-react";
+import { Copy, ExternalLink, FileCode2 } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

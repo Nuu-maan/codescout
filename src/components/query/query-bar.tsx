@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useState } from "react";
-import { ArrowUp, BrainCircuit, ChevronDown, GitBranch, KeyRound, ScanSearch } from "lucide-react";
+import { ArrowUp, BrainCircuit, ChevronDown, GitBranch, KeyRound, ScanSearch } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
