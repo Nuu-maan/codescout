@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { GitFork, LockKeyhole, Plus, ScanLine } from "lucide-react";
+import { GitFork, LockKeyhole, Plus, ScanLine } from "@/components/ui/icons";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {

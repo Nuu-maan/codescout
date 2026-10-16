@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff, KeyRound, Trash2 } from "lucide-react";
+import { Eye, EyeOff, KeyRound, Trash2 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

@@ -15,7 +15,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Workflow,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 import { QueryBar } from "@/components/query/query-bar";

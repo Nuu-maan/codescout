@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Braces, ChevronsUpDown, GitBranch, GitFork, Search } from "lucide-react";
+import { Braces, ChevronsUpDown, GitBranch, GitFork, Search } from "@/components/ui/icons";
 import { FileTree } from "@/components/ai-elements/file-tree";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
