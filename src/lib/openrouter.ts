@@ -18,19 +18,21 @@ export function getOpenRouterModel() {
 }
 
 export async function streamRepositoryAnswer({
+  apiKey: suppliedApiKey,
   question,
   decision,
   model = getOpenRouterModel(),
   repositoryContext,
   signal,
 }: {
+  apiKey?: string;
   question: string;
   decision: RepositoryDecision;
   model?: ResponseModelId;
   repositoryContext: string;
   signal?: AbortSignal;
 }) {
-  const apiKey = getOpenRouterKey();
+  const apiKey = suppliedApiKey ?? getOpenRouterKey();
 
   if (!apiKey) {
     throw new Error("OPENROUTER is not configured.");
