@@ -1,5 +1,6 @@
 import { streamRepositoryAnswer } from "@/lib/openrouter";
 import { isResponseModelId } from "@/lib/models";
+import { isValidOpenRouterKey } from "@/lib/openrouter-key";
 import { decideRepositoryRoute } from "@/lib/subq";
 
 const MAX_FILES = 120;
@@ -19,6 +20,7 @@ export const maxDuration = 60;
 export async function POST(request: Request) {
   const payload = (await request.json()) as QueryPayload;
   const question = payload.question?.trim();
+  const suppliedOpenRouterKey = request.headers.get("x-openrouter-key")?.trim();
 
   if (!question) {
     return Response.json({ error: "Enter a question about the repository." }, { status: 400 });
@@ -26,6 +28,10 @@ export async function POST(request: Request) {
 
   if (!isResponseModelId(payload.model)) {
     return Response.json({ error: "Choose a supported response model." }, { status: 400 });
+  }
+
+  if (suppliedOpenRouterKey && !isValidOpenRouterKey(suppliedOpenRouterKey)) {
+    return Response.json({ error: "The personal OpenRouter key is invalid." }, { status: 400 });
   }
 
   const repositoryFiles = validateRepositoryFiles(payload.repository?.files);
@@ -45,6 +51,7 @@ export async function POST(request: Request) {
       .map(([path, content]) => `--- ${path} ---\n${content}`)
       .join("\n\n");
     const response = await streamRepositoryAnswer({
+      apiKey: suppliedOpenRouterKey,
       question,
       decision,
       model: payload.model,

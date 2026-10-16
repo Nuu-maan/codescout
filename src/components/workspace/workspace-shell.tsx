@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Braces, Files, Plus, Settings2 } from "lucide-react";
+import { Braces, Files, KeyRound, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { AnalysisWorkspace } from "@/components/query/analysis-workspace";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,9 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CodeViewer } from "@/components/workspace/code-viewer";
 import { RepositoryDialog } from "@/components/workspace/repository-dialog";
+import { OpenRouterKeyDialog } from "@/components/workspace/openrouter-key-dialog";
 import { RepositoryPanel } from "@/components/workspace/repository-panel";
+import { useOpenRouterKey } from "@/hooks/use-openrouter-key";
 import { defaultRepository } from "@/lib/demo-data";
 import type { RepositorySnapshot } from "@/types/workspace";
 
@@ -19,6 +22,7 @@ export function WorkspaceShell() {
   const [repository, setRepository] = useState(defaultRepository);
   const [selectedPath, setSelectedPath] = useState(Object.keys(defaultRepository.files)[0]);
   const [repositoryDialogOpen, setRepositoryDialogOpen] = useState(false);
+  const [openRouterKeyDialogOpen, setOpenRouterKeyDialogOpen] = useState(false);
   const [filesOpen, setFilesOpen] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false);
   const [pipelineStatus, setPipelineStatus] = useState<{
@@ -26,6 +30,7 @@ export function WorkspaceShell() {
     snapAvailable: boolean;
     openRouterConfigured: boolean;
   } | null>(null);
+  const { key: openRouterKey, saveKey: saveOpenRouterKey } = useOpenRouterKey();
 
   useEffect(() => {
     fetch("/api/status")
@@ -70,8 +75,8 @@ export function WorkspaceShell() {
           <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
           <ThemeToggle />
           <Tooltip>
-            <TooltipTrigger asChild><Button variant="ghost" size="icon-sm" aria-label="Repository settings"><Settings2 /></Button></TooltipTrigger>
-            <TooltipContent>Repository settings</TooltipContent>
+            <TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className={openRouterKey ? "text-emerald-600 dark:text-emerald-400" : undefined} aria-label="OpenRouter API key" onClick={() => setOpenRouterKeyDialogOpen(true)}><KeyRound /></Button></TooltipTrigger>
+            <TooltipContent>{openRouterKey ? "Personal OpenRouter key active" : "Add your OpenRouter key"}</TooltipContent>
           </Tooltip>
           <Button size="sm" className="pressable gap-1.5" onClick={() => setRepositoryDialogOpen(true)}><Plus className="size-3.5" /><span className="hidden sm:inline">Add repository</span></Button>
           <Button variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Browse repository files" onClick={() => setFilesOpen(true)}><Files /></Button>
@@ -85,6 +90,7 @@ export function WorkspaceShell() {
         <AnalysisWorkspace
           key={repository.id}
           repository={repository}
+          openRouterKey={openRouterKey}
           onOpenSource={openSource}
           onOpenFiles={() => setFilesOpen(true)}
           onChangeRepository={() => setRepositoryDialogOpen(true)}
@@ -106,6 +112,21 @@ export function WorkspaceShell() {
       </Sheet>
 
       <RepositoryDialog open={repositoryDialogOpen} onOpenChange={setRepositoryDialogOpen} onIndexed={useRepository} />
+      {openRouterKeyDialogOpen && (
+        <OpenRouterKeyDialog
+          initialKey={openRouterKey}
+          open={openRouterKeyDialogOpen}
+          onOpenChange={setOpenRouterKeyDialogOpen}
+          onSave={(key) => {
+            if (saveOpenRouterKey(key)) {
+              setOpenRouterKeyDialogOpen(false);
+              toast.success(key ? "Personal OpenRouter key saved" : "Personal OpenRouter key removed");
+            } else {
+              toast.error("This browser could not save the key");
+            }
+          }}
+        />
+      )}
       <div className="sr-only" aria-live="polite">{getPipelineLabel(pipelineStatus)}</div>
     </div>
   );
