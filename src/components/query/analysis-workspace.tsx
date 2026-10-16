@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Message, MessageContent, MessageFooter } from "@/components/ui/message";
 import { Spinner } from "@/components/ui/spinner";
+import { defaultResponseModel, getResponseModel, type ResponseModelId } from "@/lib/models";
 import type { RepositorySnapshot } from "@/types/workspace";
 
 type AnalysisWorkspaceProps = {
@@ -37,6 +38,7 @@ type QueryRun = {
   id: string;
   question: string;
   answer: string;
+  model: ResponseModelId;
   status: "streaming" | "complete";
   route?: string;
   confidence?: number;
@@ -52,6 +54,7 @@ const suggestions = [
 
 export function AnalysisWorkspace({ repository, onOpenSource, onOpenFiles, onChangeRepository }: AnalysisWorkspaceProps) {
   const [runs, setRuns] = useState<QueryRun[]>([]);
+  const [model, setModel] = useState<ResponseModelId>(defaultResponseModel);
   const [submitting, setSubmitting] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -65,14 +68,14 @@ export function AnalysisWorkspace({ repository, onOpenSource, onOpenFiles, onCha
 
   const runQuery = async (question: string) => {
     const id = crypto.randomUUID();
-    setRuns((current) => [...current, { id, question, answer: "", status: "streaming" }]);
+    setRuns((current) => [...current, { id, question, answer: "", model, status: "streaming" }]);
     setSubmitting(true);
 
     try {
       const response = await fetch("/api/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, repository: { fullName: repository.fullName, files: repository.files } }),
+        body: JSON.stringify({ question, model, repository: { fullName: repository.fullName, files: repository.files } }),
       });
 
       if (!response.ok || !response.body) {
@@ -136,7 +139,7 @@ export function AnalysisWorkspace({ repository, onOpenSource, onOpenFiles, onCha
 
       <footer className="shrink-0 bg-background px-4 pb-4 pt-2 sm:px-6">
         <div className="mx-auto max-w-3xl">
-          <QueryBar repositoryName={repository.name} submitting={submitting} onSubmit={runQuery} />
+          <QueryBar repositoryName={repository.name} submitting={submitting} onSubmit={runQuery} model={model} onModelChange={setModel} />
           <p className="mt-2 text-center text-[10px] text-muted-foreground">CodeScout can make mistakes. Verify important details in the cited source files.</p>
         </div>
       </footer>
@@ -190,6 +193,8 @@ function ConversationTurn({ run, onOpenSource }: { run: QueryRun; onOpenSource: 
 }
 
 function DecisionSummary({ run, selectedPaths, confidence }: { run: QueryRun; selectedPaths: string[]; confidence: number }) {
+  const model = getResponseModel(run.model);
+
   return (
     <Collapsible>
       <CollapsibleTrigger asChild>
@@ -200,7 +205,7 @@ function DecisionSummary({ run, selectedPaths, confidence }: { run: QueryRun; se
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-1 w-fit rounded-lg bg-secondary px-3 py-2 text-[11px] text-muted-foreground">
-        <div className="flex flex-wrap gap-x-4 gap-y-1"><span>Route: <strong className="font-medium text-foreground">{run.route ?? "waiting"}</strong></span><span>Confidence: <strong className="font-medium text-foreground">{confidence}%</strong></span><span>Writer: <strong className="font-medium text-foreground">OpenRouter</strong></span></div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1"><span>Route: <strong className="font-medium text-foreground">{run.route ?? "waiting"}</strong></span><span>Confidence: <strong className="font-medium text-foreground">{confidence}%</strong></span><span>Writer: <strong className="font-medium text-foreground">{model.name}</strong></span></div>
       </CollapsibleContent>
     </Collapsible>
   );

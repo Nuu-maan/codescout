@@ -1,10 +1,12 @@
 import { streamRepositoryAnswer } from "@/lib/openrouter";
+import { isResponseModelId } from "@/lib/models";
 import { decideRepositoryRoute } from "@/lib/subq";
 
 const MAX_FILES = 120;
 const MAX_CONTEXT_CHARACTERS = 700_000;
 
 type QueryPayload = {
+  model?: unknown;
   question?: string;
   repository?: {
     fullName?: string;
@@ -20,6 +22,10 @@ export async function POST(request: Request) {
 
   if (!question) {
     return Response.json({ error: "Enter a question about the repository." }, { status: 400 });
+  }
+
+  if (!isResponseModelId(payload.model)) {
+    return Response.json({ error: "Choose a supported response model." }, { status: 400 });
   }
 
   const repositoryFiles = validateRepositoryFiles(payload.repository?.files);
@@ -41,6 +47,7 @@ export async function POST(request: Request) {
     const response = await streamRepositoryAnswer({
       question,
       decision,
+      model: payload.model,
       repositoryContext,
       signal: request.signal,
     });
