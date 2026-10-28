@@ -5,7 +5,11 @@ import { createFileTree, parseGitHubRepositoryUrl, resolveRepositoryPath, select
 test("parses only canonical public GitHub repository URLs", () => {
   assert.deepEqual(parseGitHubRepositoryUrl("https://github.com/anishfn/snapshift"), { owner: "anishfn", name: "snapshift" });
   assert.deepEqual(parseGitHubRepositoryUrl("https://github.com/openai/openai-node.git"), { owner: "openai", name: "openai-node" });
+  assert.deepEqual(parseGitHubRepositoryUrl("github.com/vercel/ms/"), { owner: "vercel", name: "ms" });
+  assert.deepEqual(parseGitHubRepositoryUrl(" vercel/ms "), { owner: "vercel", name: "ms" });
+  assert.deepEqual(parseGitHubRepositoryUrl("https://www.github.com/vercel/ms"), { owner: "vercel", name: "ms" });
   assert.throws(() => parseGitHubRepositoryUrl("http://github.com/openai/openai-node"));
+  assert.throws(() => parseGitHubRepositoryUrl("https://gist.github.com/openai/openai-node"));
   assert.throws(() => parseGitHubRepositoryUrl("https://example.com/openai/openai-node"));
   assert.throws(() => parseGitHubRepositoryUrl("https://github.com/openai/openai-node/issues"));
 });

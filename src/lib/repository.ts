@@ -17,14 +17,17 @@ const excludedPaths = /(^|\/)(?:\.git|\.next|\.nuxt|\.output|build|coverage|dist
 export type SourceFileEntry = { path: string; size: number };
 
 export function parseGitHubRepositoryUrl(value: string): GitHubRepositoryRef {
+  const trimmed = value.trim();
+  const withHost = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/.test(trimmed) ? `github.com/${trimmed}` : trimmed;
+  const withProtocol = /^(?:www\.)?github\.com\//i.test(withHost) ? `https://${withHost}` : withHost;
   let url: URL;
   try {
-    url = new URL(value.trim());
+    url = new URL(withProtocol);
   } catch {
     throw new Error("Enter a valid GitHub repository URL.");
   }
 
-  if (url.protocol !== "https:" || url.hostname.toLowerCase() !== "github.com" || url.username || url.password) {
+  if (url.protocol !== "https:" || !["github.com", "www.github.com"].includes(url.hostname.toLowerCase()) || url.username || url.password) {
     throw new Error("Use a public https://github.com repository URL.");
   }
 
