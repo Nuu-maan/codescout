@@ -1,7 +1,9 @@
 export async function readJsonBody<T>(request: Request): Promise<T | null> {
   try {
     const payload: unknown = await request.json();
-    return payload && typeof payload === "object" && !Array.isArray(payload) ? payload as T : null;
+    return payload && typeof payload === "object" && !Array.isArray(payload)
+      ? (payload as T)
+      : null;
   } catch {
     return null;
   }
@@ -9,8 +11,17 @@ export async function readJsonBody<T>(request: Request): Promise<T | null> {
 
 const requestLog = new Map<string, number[]>();
 
-export function rateLimit(request: Request, bucket: string, limit: number, windowMs = 60_000, now = Date.now()) {
-  const client = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+export function rateLimit(
+  request: Request,
+  bucket: string,
+  limit: number,
+  windowMs = 60_000,
+  now = Date.now(),
+) {
+  const client =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
   const key = `${bucket}:${client}`;
   const recent = (requestLog.get(key) ?? []).filter((time) => now - time < windowMs);
 

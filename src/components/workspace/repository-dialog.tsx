@@ -35,17 +35,23 @@ export function RepositoryDialog({ open, onOpenChange, onIndexed }: RepositoryDi
   };
 
   return (
-    <Dialog open={open} onOpenChange={(next) => {
-      if (loading) return;
-      if (!next) clearError();
-      onOpenChange(next);
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (loading) return;
+        if (!next) clearError();
+        onOpenChange(next);
+      }}
+    >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <div className="mb-2 flex size-11 items-center justify-center rounded-[13px] bg-secondary text-card-foreground"><GitFork className="size-5" /></div>
+          <div className="mb-2 flex size-11 items-center justify-center rounded-[13px] bg-secondary text-card-foreground">
+            <GitFork className="size-5" />
+          </div>
           <DialogTitle>Add a GitHub repository</DialogTitle>
           <DialogDescription>
-            CodeScout reads up to 120 source files from the latest commit on the default branch. Public repositories only.
+            CodeScout reads up to 120 source files from the latest commit on the default branch.
+            Public repositories only.
           </DialogDescription>
         </DialogHeader>
 
@@ -60,11 +66,27 @@ export function RepositoryDialog({ open, onOpenChange, onIndexed }: RepositoryDi
             spellCheck={false}
             autoCapitalize="none"
           />
-          {error && <p key={error} role="alert" className="flex animate-enter items-start gap-1.5 text-[13px] text-destructive"><TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" />{error}</p>}
+          {error && (
+            <p
+              key={error}
+              role="alert"
+              className="flex animate-enter items-start gap-1.5 text-[13px] text-destructive"
+            >
+              <TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" />
+              {error}
+            </p>
+          )}
         </form>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
           <Button type="submit" form="repository-form" disabled={!url.trim() || loading}>
             {loading ? <Spinner /> : <Plus />}
             {loading ? "Indexing repository…" : "Add repository"}

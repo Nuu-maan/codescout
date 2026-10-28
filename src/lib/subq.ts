@@ -31,13 +31,20 @@ export function createSubQHeaders() {
 export async function decideRepositoryRoute(
   question: string,
   repositoryFiles: Record<string, string>,
-  { repositoryName = "repository", previousQuestions = [], signal }: {
+  {
+    repositoryName = "repository",
+    previousQuestions = [],
+    signal,
+  }: {
     repositoryName?: string;
     previousQuestions?: string[];
     signal?: AbortSignal;
   } = {},
 ): Promise<RepositoryDecision> {
-  const candidatePaths = selectCandidatePaths([...previousQuestions.slice(-1), question].join(" "), repositoryFiles);
+  const candidatePaths = selectCandidatePaths(
+    [...previousQuestions.slice(-1), question].join(" "),
+    repositoryFiles,
+  );
   const files = candidatePaths.map((path, index) => ({
     id: `file_${index}`,
     path,
@@ -86,7 +93,8 @@ export async function decideRepositoryRoute(
       },
     }),
   }).catch((error: unknown) => {
-    if (timeout.aborted) throw new Error("SubQ Snap took too long to choose source files. Try again.");
+    if (timeout.aborted)
+      throw new Error("SubQ Snap took too long to choose source files. Try again.");
     throw error;
   });
 

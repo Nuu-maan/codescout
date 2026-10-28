@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { defaultResponseModel, getResponseModel, isResponseModelId, responseModels } from "./models.ts";
+import {
+  defaultResponseModel,
+  getResponseModel,
+  isResponseModelId,
+  responseModels,
+} from "./models.ts";
 
 test("accepts only configured response models", () => {
   for (const model of responseModels) assert.equal(isResponseModelId(model.id), true);
