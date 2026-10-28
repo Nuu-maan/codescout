@@ -129,3 +129,11 @@ function sourcePriority(path: string) {
 function depth(path: string) {
   return path.split("/").length;
 }
+
+export function resolveRepositoryPath(reference: string, paths: string[]) {
+  const candidate = reference.trim().replace(/^\.?\//, "").replace(/(?::\d+){1,2}$|#L\d+(?:-L?\d+)?$/, "");
+  if (!candidate || candidate.includes(" ")) return null;
+  if (paths.includes(candidate)) return candidate;
+  const matches = paths.filter((path) => path.endsWith(`/${candidate}`));
+  return matches.length === 1 ? matches[0] : null;
+}

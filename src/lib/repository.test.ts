@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createFileTree, parseGitHubRepositoryUrl, selectCandidatePaths, selectSourceFiles } from "./repository.ts";
+import { createFileTree, parseGitHubRepositoryUrl, resolveRepositoryPath, selectCandidatePaths, selectSourceFiles } from "./repository.ts";
 
 test("parses only canonical public GitHub repository URLs", () => {
   assert.deepEqual(parseGitHubRepositoryUrl("https://github.com/anishfn/snapshift"), { owner: "anishfn", name: "snapshift" });
@@ -50,4 +50,14 @@ test("indexes root landmarks first and keeps filling after a file that does not 
   assert.equal(paths.includes("src/l.ts"), false);
   assert.equal(paths.at(-1), "docs/guide.md");
   assert.equal(candidateCount, 15);
+});
+
+test("resolves file references written in answers", () => {
+  const paths = ["source/core/Ky.ts", "source/index.ts", "test/index.ts", "README.md"];
+  assert.equal(resolveRepositoryPath("source/core/Ky.ts", paths), "source/core/Ky.ts");
+  assert.equal(resolveRepositoryPath("./source/core/Ky.ts:42", paths), "source/core/Ky.ts");
+  assert.equal(resolveRepositoryPath("core/Ky.ts#L10-L20", paths), "source/core/Ky.ts");
+  assert.equal(resolveRepositoryPath("Ky.ts", paths), "source/core/Ky.ts");
+  assert.equal(resolveRepositoryPath("index.ts", paths), null);
+  assert.equal(resolveRepositoryPath("retry()", paths), null);
 });
