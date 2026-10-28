@@ -2,7 +2,7 @@ import { streamRepositoryAnswer } from "@/lib/openrouter";
 import { isResponseModelId } from "@/lib/models";
 import { isValidOpenRouterKey } from "@/lib/openrouter-key";
 import { decideRepositoryRoute } from "@/lib/subq";
-import { readJsonBody } from "@/lib/http";
+import { rateLimit, readJsonBody } from "@/lib/http";
 import { MAX_INDEXED_FILES } from "@/lib/repository";
 
 const MAX_CONTEXT_CHARACTERS = 700_000;
@@ -20,6 +20,9 @@ type QueryPayload = {
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, "query", 12);
+  if (limited) return limited;
+
   const payload = await readJsonBody<QueryPayload>(request);
   if (!payload) {
     return Response.json({ error: "The request body must be a JSON object." }, { status: 400 });

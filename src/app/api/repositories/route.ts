@@ -1,9 +1,12 @@
 import { indexPublicGitHubRepository } from "@/lib/github";
-import { readJsonBody } from "@/lib/http";
+import { rateLimit, readJsonBody } from "@/lib/http";
 
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, "repositories", 6);
+  if (limited) return limited;
+
   const payload = await readJsonBody<{ url?: unknown }>(request);
   if (typeof payload?.url !== "string") {
     return Response.json({ error: "Enter a GitHub repository URL." }, { status: 400 });
