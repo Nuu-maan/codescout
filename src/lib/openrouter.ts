@@ -1,4 +1,5 @@
 import type { RepositoryDecision } from "@/lib/subq";
+import type { ConversationTurn } from "@/types/workspace";
 import { defaultResponseModel, isResponseModelId, type ResponseModelId } from "@/lib/models";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1";
@@ -20,6 +21,7 @@ export function getOpenRouterModel() {
 export async function streamRepositoryAnswer({
   apiKey: suppliedApiKey,
   question,
+  history = [],
   decision,
   model = getOpenRouterModel(),
   repositoryContext,
@@ -27,6 +29,7 @@ export async function streamRepositoryAnswer({
 }: {
   apiKey?: string;
   question: string;
+  history?: ConversationTurn[];
   decision: RepositoryDecision;
   model?: ResponseModelId;
   repositoryContext: string;
@@ -64,6 +67,10 @@ export async function streamRepositoryAnswer({
             `SubQ Snap selected: ${decision.selectedFiles.join(", ") || "no files"}.`,
           ].join("\n"),
         },
+        ...history.flatMap((turn) => [
+          { role: "user", content: turn.question },
+          { role: "assistant", content: turn.answer },
+        ]),
         {
           role: "user",
           content: `Repository context:\n<repository>\n${repositoryContext}\n</repository>\n\nQuestion: ${question}`,

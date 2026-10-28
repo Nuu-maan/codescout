@@ -4,11 +4,15 @@ import { isValidOpenRouterKey } from "@/lib/openrouter-key";
 import { decideRepositoryRoute } from "@/lib/subq";
 import { rateLimit, readJsonBody } from "@/lib/http";
 import { MAX_INDEXED_FILES } from "@/lib/repository";
+import type { ConversationTurn } from "@/types/workspace";
 
 const MAX_CONTEXT_CHARACTERS = 700_000;
 const MAX_QUESTION_CHARACTERS = 4_000;
+const MAX_HISTORY_TURNS = 4;
+const MAX_HISTORY_ANSWER_CHARACTERS = 6_000;
 
 type QueryPayload = {
+  history?: unknown;
   model?: unknown;
   question?: unknown;
   repository?: {
@@ -50,13 +54,14 @@ export async function POST(request: Request) {
   const repositoryFiles = validateRepositoryFiles(payload.repository?.files);
   if (repositoryFiles instanceof Response) return repositoryFiles;
 
+  const history = getHistory(payload.history);
+
   try {
-    const decision = await decideRepositoryRoute(
-      question,
-      repositoryFiles,
-      getRepositoryName(payload.repository?.fullName),
-      request.signal,
-    );
+    const decision = await decideRepositoryRoute(question, repositoryFiles, {
+      repositoryName: getRepositoryName(payload.repository?.fullName),
+      previousQuestions: history.map((turn) => turn.question),
+      signal: request.signal,
+    });
     const selectedFiles = decision.selectedFiles.length
       ? decision.selectedFiles
       : decision.consideredFiles;
@@ -67,6 +72,7 @@ export async function POST(request: Request) {
     const response = await streamRepositoryAnswer({
       apiKey: suppliedOpenRouterKey,
       question,
+      history,
       decision,
       model: payload.model,
       repositoryContext,
@@ -94,6 +100,17 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : "Unable to run the answer pipeline.";
     return Response.json({ error: message }, { status: 503 });
   }
+}
+
+function getHistory(value: unknown): ConversationTurn[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((turn): turn is ConversationTurn => typeof turn?.question === "string" && typeof turn?.answer === "string" && Boolean(turn.answer))
+    .slice(-MAX_HISTORY_TURNS)
+    .map((turn) => ({
+      question: turn.question.slice(0, MAX_QUESTION_CHARACTERS),
+      answer: turn.answer.slice(0, MAX_HISTORY_ANSWER_CHARACTERS),
+    }));
 }
 
 function getRepositoryName(value: unknown) {

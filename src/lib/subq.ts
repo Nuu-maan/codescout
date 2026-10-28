@@ -31,10 +31,13 @@ export function createSubQHeaders() {
 export async function decideRepositoryRoute(
   question: string,
   repositoryFiles: Record<string, string>,
-  repositoryName = "repository",
-  signal?: AbortSignal,
+  { repositoryName = "repository", previousQuestions = [], signal }: {
+    repositoryName?: string;
+    previousQuestions?: string[];
+    signal?: AbortSignal;
+  } = {},
 ): Promise<RepositoryDecision> {
-  const candidatePaths = selectCandidatePaths(question, repositoryFiles);
+  const candidatePaths = selectCandidatePaths([...previousQuestions.slice(-1), question].join(" "), repositoryFiles);
   const files = candidatePaths.map((path, index) => ({
     id: `file_${index}`,
     path,
@@ -60,7 +63,7 @@ export async function decideRepositoryRoute(
     signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     body: JSON.stringify({
       model: "subq-snap-preview",
-      state: { question, repository: repositoryName, files },
+      state: { question, previous_questions: previousQuestions, repository: repositoryName, files },
       questions: {
         route: {
           type: "choice",
