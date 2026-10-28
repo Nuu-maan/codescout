@@ -65,7 +65,7 @@ export function WorkspaceShell() {
         </div>
 
         <div className="ms-auto flex items-center gap-1">
-          <span className="me-1 inline-flex h-7 items-center gap-1.5 rounded-lg bg-secondary px-2.5 text-xs font-medium text-card-foreground">
+          <span className="me-1 inline-flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-card-foreground md:bg-secondary md:px-2.5">
             <span className={`size-1.5 rounded-full transition-colors duration-300 ${pipelineStatus === null ? "bg-muted-foreground/50" : pipelineStatus.available ? "bg-success" : "bg-destructive"}`} />
             <span className="hidden md:inline">{getPipelineLabel(pipelineStatus)}</span>
           </span>
