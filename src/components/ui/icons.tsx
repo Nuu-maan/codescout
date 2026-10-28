@@ -8,7 +8,6 @@ import {
   ArrowRight01Icon,
   ArrowUp01Icon,
   ArrowUpRight01Icon,
-  BrainCircuitIcon,
   Cancel01Icon,
   CancelCircleIcon,
   CheckmarkCircle02Icon,
@@ -25,12 +24,9 @@ import {
   InformationCircleIcon,
   Key01Icon,
   Loading03Icon,
-  LockKeyholeIcon,
   Moon02Icon,
   NeuralNetworkIcon,
   RefreshCwIcon,
-  ScanLineIcon,
-  ScanSearchIcon,
   Search01Icon,
   SecurityCheckIcon,
   SquareArrowUpRightIcon,
@@ -50,22 +46,19 @@ function createIcon(icon: IconSvgElement) {
   };
 }
 
-export const ArrowDownIcon = createIcon(ArrowDown01Icon);
-export const ArrowDown = ArrowDownIcon;
 export const ArrowUp = createIcon(ArrowUp01Icon);
 export const ArrowUpRight = createIcon(ArrowUpRight01Icon);
 export const Braces = createIcon(CodeIcon);
-export const BrainCircuit = createIcon(BrainCircuitIcon);
+export const Check = createIcon(Tick02Icon);
 export const CheckIcon = createIcon(Tick02Icon);
-export const Check = CheckIcon;
-export const ChevronDown = ArrowDownIcon;
+export const ChevronDown = createIcon(ArrowDown01Icon);
+export const ChevronRight = createIcon(ArrowRight01Icon);
 export const ChevronRightIcon = createIcon(ArrowRight01Icon);
-export const ChevronRight = ChevronRightIcon;
 export const ChevronsUpDown = createIcon(ArrowDataTransferVerticalIcon);
 export const Circle = createIcon(CircleIcon);
 export const CircleCheckIcon = createIcon(CheckmarkCircle02Icon);
+export const Copy = createIcon(Copy01Icon);
 export const CopyIcon = createIcon(Copy01Icon);
-export const Copy = CopyIcon;
 export const ExternalLink = createIcon(SquareArrowUpRightIcon);
 export const Eye = createIcon(ViewIcon);
 export const EyeOff = createIcon(ViewOffIcon);
@@ -78,16 +71,12 @@ export const GitFork = createIcon(GitForkIcon);
 export const InfoIcon = createIcon(InformationCircleIcon);
 export const KeyRound = createIcon(Key01Icon);
 export const Loader2Icon = createIcon(Loading03Icon);
-export const LockKeyhole = createIcon(LockKeyholeIcon);
 export const Moon = createIcon(Moon02Icon);
 export const Network = createIcon(NeuralNetworkIcon);
 export const OctagonXIcon = createIcon(CancelCircleIcon);
 export const Plus = createIcon(Add01Icon);
 export const RefreshCw = createIcon(RefreshCwIcon);
-export const ScanLine = createIcon(ScanLineIcon);
-export const ScanSearch = createIcon(ScanSearchIcon);
-export const SearchIcon = createIcon(Search01Icon);
-export const Search = SearchIcon;
+export const Search = createIcon(Search01Icon);
 export const ShieldCheck = createIcon(SecurityCheckIcon);
 export const Stop = createIcon(StopIcon);
 export const Sun = createIcon(Sun03Icon);
