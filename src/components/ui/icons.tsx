@@ -34,6 +34,7 @@ import {
   Search01Icon,
   SecurityCheckIcon,
   SquareArrowUpRightIcon,
+  StopIcon,
   Sun03Icon,
   Tick02Icon,
   ViewIcon,
@@ -88,6 +89,7 @@ export const ScanSearch = createIcon(ScanSearchIcon);
 export const SearchIcon = createIcon(Search01Icon);
 export const Search = SearchIcon;
 export const ShieldCheck = createIcon(SecurityCheckIcon);
+export const Stop = createIcon(StopIcon);
 export const Sun = createIcon(Sun03Icon);
 export const Trash2 = createIcon(Delete02Icon);
 export const TriangleAlertIcon = createIcon(Alert01Icon);
