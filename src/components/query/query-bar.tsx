@@ -24,7 +24,15 @@ type QueryBarProps = {
   repositoryName: string;
 };
 
-export function QueryBar({ submitting, onSubmit, onStop, model, onModelChange, hasPersonalKey, repositoryName }: QueryBarProps) {
+export function QueryBar({
+  submitting,
+  onSubmit,
+  onStop,
+  model,
+  onModelChange,
+  hasPersonalKey,
+  repositoryName,
+}: QueryBarProps) {
   const [value, setValue] = useState("");
   const selectedModel = getResponseModel(model);
 
@@ -48,7 +56,11 @@ export function QueryBar({ submitting, onSubmit, onStop, model, onModelChange, h
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-[22px] bg-card p-2 shadow-raised transition-shadow duration-200 ease-out-quint focus-within:shadow-popover" aria-label="Ask about repository">
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-[22px] bg-card p-2 shadow-raised transition-shadow duration-200 ease-out-quint focus-within:shadow-popover"
+      aria-label="Ask about repository"
+    >
       <Textarea
         value={value}
         onChange={(event) => setValue(event.target.value)}
@@ -61,37 +73,70 @@ export function QueryBar({ submitting, onSubmit, onStop, model, onModelChange, h
       <div className="flex items-center gap-2 px-2 pb-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 max-w-48 gap-1 rounded-[10px] px-2 text-[12px] font-normal text-muted-foreground" disabled={submitting}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 max-w-48 gap-1 rounded-[10px] px-2 text-[12px] font-normal text-muted-foreground"
+              disabled={submitting}
+            >
               <span className="truncate">{selectedModel.name}</span>
               <ChevronDown className="size-3" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-72">
             <DropdownMenuLabel>Response model</DropdownMenuLabel>
-            <DropdownMenuRadioGroup value={model} onValueChange={(value) => {
-              if (responseModels.some(({ id }) => id === value)) onModelChange(value as ResponseModelId);
-            }}>
+            <DropdownMenuRadioGroup
+              value={model}
+              onValueChange={(value) => {
+                if (responseModels.some(({ id }) => id === value))
+                  onModelChange(value as ResponseModelId);
+              }}
+            >
               {responseModels.map((option) => (
-                <DropdownMenuRadioItem key={option.id} value={option.id} className="items-start py-2">
+                <DropdownMenuRadioItem
+                  key={option.id}
+                  value={option.id}
+                  className="items-start py-2"
+                >
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2 font-medium">
                       {option.name}
-                      <span className="rounded bg-muted px-1 py-0.5 text-[9px] font-normal text-muted-foreground">{option.access}</span>
+                      <span className="rounded bg-muted px-1 py-0.5 text-[9px] font-normal text-muted-foreground">
+                        {option.access}
+                      </span>
                     </span>
-                    <span className="block text-[10px] text-muted-foreground">{option.provider}</span>
+                    <span className="block text-[10px] text-muted-foreground">
+                      {option.provider}
+                    </span>
                   </span>
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
-        {hasPersonalKey && <span className="inline-flex animate-enter items-center gap-1 text-[11px] text-success"><KeyRound className="size-3" /> your key</span>}
+        {hasPersonalKey && (
+          <span className="inline-flex animate-enter items-center gap-1 text-[11px] text-success">
+            <KeyRound className="size-3" /> your key
+          </span>
+        )}
         {submitting ? (
-          <Button type="button" size="icon-sm" className="ms-auto rounded-full" onClick={onStop} aria-label="Stop answer">
+          <Button
+            type="button"
+            size="icon-sm"
+            className="ms-auto rounded-full"
+            onClick={onStop}
+            aria-label="Stop answer"
+          >
             <Stop className="animate-icon-in" />
           </Button>
         ) : (
-          <Button type="submit" size="icon-sm" className="ms-auto rounded-full" disabled={!value.trim()} aria-label="Send question">
+          <Button
+            type="submit"
+            size="icon-sm"
+            className="ms-auto rounded-full"
+            disabled={!value.trim()}
+            aria-label="Send question"
+          >
             <ArrowUp className="animate-icon-in" />
           </Button>
         )}

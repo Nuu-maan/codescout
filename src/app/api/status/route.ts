@@ -10,7 +10,7 @@ export async function GET() {
       cache: "no-store",
     });
     const payload = response.ok
-      ? (await response.json()) as { data?: Array<{ id: string }> }
+      ? ((await response.json()) as { data?: Array<{ id: string }> })
       : null;
     const snapAvailable = payload?.data?.some(({ id }) => id === "subq-snap-preview") ?? false;
 

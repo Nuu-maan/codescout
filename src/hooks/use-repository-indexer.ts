@@ -18,8 +18,12 @@ export function useRepositoryIndexer(onIndexed: (repository: RepositorySnapshot)
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
-      const payload = (await response.json().catch(() => null)) as { repository?: RepositorySnapshot; error?: string } | null;
-      if (!response.ok || !payload?.repository) throw new Error(payload?.error ?? "The repository could not be indexed.");
+      const payload = (await response.json().catch(() => null)) as {
+        repository?: RepositorySnapshot;
+        error?: string;
+      } | null;
+      if (!response.ok || !payload?.repository)
+        throw new Error(payload?.error ?? "The repository could not be indexed.");
       onIndexed(payload.repository);
       return true;
     } catch (reason) {
@@ -30,5 +34,11 @@ export function useRepositoryIndexer(onIndexed: (repository: RepositorySnapshot)
     }
   };
 
-  return { index, pendingUrl, loading: pendingUrl !== null, error, clearError: () => setError(null) };
+  return {
+    index,
+    pendingUrl,
+    loading: pendingUrl !== null,
+    error,
+    clearError: () => setError(null),
+  };
 }

@@ -37,11 +37,11 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment variables
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `SUBQ-KEY` or `SUBQ_API_KEY` | Yes | Routes questions and selects repository evidence with SubQ Snap |
-| `OPENROUTER` or `OPENROUTER_API_KEY` | Yes, unless every visitor brings a key | Generates streamed, repository-grounded answers |
-| `GITHUB_TOKEN` | Recommended in production | Raises the GitHub API limit from 60 to 5,000 requests per hour. A fine-grained token with no extra permissions is enough |
+| Variable                             | Required                               | Purpose                                                                                                                  |
+| ------------------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `SUBQ-KEY` or `SUBQ_API_KEY`         | Yes                                    | Routes questions and selects repository evidence with SubQ Snap                                                          |
+| `OPENROUTER` or `OPENROUTER_API_KEY` | Yes, unless every visitor brings a key | Generates streamed, repository-grounded answers                                                                          |
+| `GITHUB_TOKEN`                       | Recommended in production              | Raises the GitHub API limit from 60 to 5,000 requests per hour. A fine-grained token with no extra permissions is enough |
 
 Visitors can also add a personal OpenRouter key from the key button in the header. It stays in their browser and is sent only with their questions.
 

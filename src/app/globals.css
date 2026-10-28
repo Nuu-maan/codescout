@@ -105,8 +105,11 @@
   --sidebar-accent-foreground: #171717;
   --sidebar-border: rgb(0 0 0 / 0.06);
   --sidebar-ring: rgb(23 23 23 / 0.12);
-  --raised-ring: 0 0 0 1px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06), 0 2px 4px rgb(0 0 0 / 0.04);
-  --popover-ring: 0 0 0 1px rgb(0 0 0 / 0.06), 0 4px 8px -2px rgb(0 0 0 / 0.06), 0 12px 24px -4px rgb(0 0 0 / 0.08);
+  --raised-ring:
+    0 0 0 1px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06), 0 2px 4px rgb(0 0 0 / 0.04);
+  --popover-ring:
+    0 0 0 1px rgb(0 0 0 / 0.06), 0 4px 8px -2px rgb(0 0 0 / 0.06),
+    0 12px 24px -4px rgb(0 0 0 / 0.08);
 }
 
 .dark {
@@ -142,8 +145,11 @@
   --sidebar-accent-foreground: #f2f2f2;
   --sidebar-border: rgb(255 255 255 / 0.06);
   --sidebar-ring: rgb(242 242 242 / 0.16);
-  --raised-ring: 0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.4), 0 2px 4px rgb(0 0 0 / 0.3);
-  --popover-ring: 0 0 0 1px rgb(255 255 255 / 0.06), 0 4px 8px -2px rgb(0 0 0 / 0.4), 0 12px 24px -4px rgb(0 0 0 / 0.5);
+  --raised-ring:
+    0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.4), 0 2px 4px rgb(0 0 0 / 0.3);
+  --popover-ring:
+    0 0 0 1px rgb(255 255 255 / 0.06), 0 4px 8px -2px rgb(0 0 0 / 0.4),
+    0 12px 24px -4px rgb(0 0 0 / 0.5);
 }
 
 @layer base {
