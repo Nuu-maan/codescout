@@ -127,23 +127,10 @@ function withMetadata(
   upstream: ReadableStream<Uint8Array>,
   metadata: { route: string; confidence: number; selectedPaths: string[] },
 ) {
-  const encoder = new TextEncoder();
-  return new ReadableStream<Uint8Array>({
-    async start(controller) {
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "codescout.metadata", ...metadata })}\n\n`));
-      const reader = upstream.getReader();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          controller.enqueue(value);
-        }
-        controller.close();
-      } catch (error) {
-        controller.error(error);
-      } finally {
-        reader.releaseLock();
-      }
+  const event = new TextEncoder().encode(`data: ${JSON.stringify({ type: "codescout.metadata", ...metadata })}\n\n`);
+  return upstream.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+    start(controller) {
+      controller.enqueue(event);
     },
-  });
+  }));
 }
