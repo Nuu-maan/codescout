@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createFileTree, parseGitHubRepositoryUrl, selectCandidatePaths } from "./repository.ts";
+import { createFileTree, parseGitHubRepositoryUrl, selectCandidatePaths, selectSourceFiles } from "./repository.ts";
 
 test("parses only canonical public GitHub repository URLs", () => {
   assert.deepEqual(parseGitHubRepositoryUrl("https://github.com/anishfn/snapshift"), { owner: "anishfn", name: "snapshift" });
@@ -22,4 +22,23 @@ test("shortlists paths that match the repository question", () => {
   const selected = selectCandidatePaths("Where are GitHub files loaded?", paths, 2);
   assert.equal(selected[0], "src/app/api/github/files/route.ts");
   assert.equal(selected.length, 2);
+});
+
+test("indexes root landmarks first and keeps filling after a file that does not fit", () => {
+  const sourceFiles = "abcdefghijkl".split("").map((name) => ({ path: `src/${name}.ts`, size: 55_000 }));
+  const { selected, candidateCount } = selectSourceFiles([
+    { path: "docs/guide.md", size: 400 },
+    ...sourceFiles,
+    { path: "src/huge.ts", size: 70_000 },
+    { path: "package-lock.json", size: 900 },
+    { path: "README.md", size: 2_000 },
+    { path: "package.json", size: 800 },
+    { path: "logo.png", size: 50 },
+  ]);
+  const paths = selected.map(({ path }) => path);
+  assert.deepEqual(paths.slice(0, 2), ["package.json", "README.md"]);
+  assert.equal(paths.includes("src/k.ts"), true);
+  assert.equal(paths.includes("src/l.ts"), false);
+  assert.equal(paths.at(-1), "docs/guide.md");
+  assert.equal(candidateCount, 15);
 });

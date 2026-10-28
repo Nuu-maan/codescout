@@ -3,8 +3,8 @@ import { isResponseModelId } from "@/lib/models";
 import { isValidOpenRouterKey } from "@/lib/openrouter-key";
 import { decideRepositoryRoute } from "@/lib/subq";
 import { readJsonBody } from "@/lib/http";
+import { MAX_INDEXED_FILES } from "@/lib/repository";
 
-const MAX_FILES = 120;
 const MAX_CONTEXT_CHARACTERS = 700_000;
 const MAX_QUESTION_CHARACTERS = 4_000;
 
@@ -103,8 +103,8 @@ function validateRepositoryFiles(input: unknown) {
   }
 
   const entries = Object.entries(input);
-  if (!entries.length || entries.length > MAX_FILES) {
-    return Response.json({ error: `Repository snapshots must contain between 1 and ${MAX_FILES} files.` }, { status: 413 });
+  if (!entries.length || entries.length > MAX_INDEXED_FILES) {
+    return Response.json({ error: `Repository snapshots must contain between 1 and ${MAX_INDEXED_FILES} files.` }, { status: 413 });
   }
 
   let totalCharacters = 0;

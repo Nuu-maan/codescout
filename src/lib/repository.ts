@@ -7,6 +7,15 @@ export type GitHubRepositoryRef = {
 
 const repositoryPart = /^[A-Za-z0-9_.-]+$/;
 
+export const MAX_INDEXED_FILES = 120;
+const MAX_INDEXED_FILE_BYTES = 60_000;
+const MAX_INDEXED_BYTES = 650_000;
+
+const supportedFiles = /(^|\/)(Dockerfile|Makefile|README(?:\.[^/]+)?|package\.json|tsconfig\.json)$|\.(?:c|cc|cpp|cs|css|go|graphql|gql|h|hpp|html|java|js|jsx|json|kt|kts|md|mdx|php|prisma|py|rb|rs|scss|sh|sql|svelte|swift|toml|ts|tsx|vue|xml|yaml|yml)$/i;
+const excludedPaths = /(^|\/)(?:\.git|\.next|\.nuxt|\.output|build|coverage|dist|node_modules|target|vendor)(\/|$)|(^|\/)(?:package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml)$|(?:\.lock|\.min\.js|\.map)$/i;
+
+export type SourceFileEntry = { path: string; size: number };
+
 export function parseGitHubRepositoryUrl(value: string): GitHubRepositoryRef {
   let url: URL;
   try {
@@ -82,4 +91,32 @@ export function selectCandidatePaths(question: string, paths: string[], limit = 
     .sort((a, b) => b.score - a.score || a.path.localeCompare(b.path))
     .slice(0, limit)
     .map(({ path }) => path);
+}
+
+export function selectSourceFiles(entries: SourceFileEntry[]) {
+  const candidates = entries
+    .filter(({ path, size }) => supportedFiles.test(path) && !excludedPaths.test(path) && size <= MAX_INDEXED_FILE_BYTES)
+    .sort((a, b) => sourcePriority(a.path) - sourcePriority(b.path) || depth(a.path) - depth(b.path) || a.size - b.size || a.path.localeCompare(b.path));
+
+  const selected: SourceFileEntry[] = [];
+  let selectedBytes = 0;
+  for (const candidate of candidates) {
+    if (selected.length >= MAX_INDEXED_FILES) break;
+    if (selectedBytes + candidate.size > MAX_INDEXED_BYTES) continue;
+    selected.push(candidate);
+    selectedBytes += candidate.size;
+  }
+
+  return { selected, candidateCount: candidates.length };
+}
+
+function sourcePriority(path: string) {
+  if (/^(?:package\.json|README(?:\.[^/]+)?|Dockerfile|Makefile|tsconfig\.json)$/i.test(path)) return 0;
+  if (/^(?:src|app|lib|packages)\//.test(path)) return 1;
+  if (/(?:^|\/)(?:test|tests|spec|__tests__)(?:\/|$)/i.test(path)) return 3;
+  return 2;
+}
+
+function depth(path: string) {
+  return path.split("/").length;
 }
