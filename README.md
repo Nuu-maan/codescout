@@ -1,5 +1,7 @@
 # CodeScout
 
+**Live:** [codescout-one.vercel.app](https://codescout-one.vercel.app)
+
 CodeScout lets you add a public GitHub repository and ask questions to quickly understand and navigate its codebase with source-backed answers.
 
 SubQ Snap selects the most relevant source files and OpenRouter streams the final response. The interface includes repository browsing, formatted answers, routing details, follow-up questions, and clickable source citations.
@@ -10,6 +12,33 @@ SubQ Snap selects the most relevant source files and OpenRouter streams the fina
 2. **Shortlisting** scores every indexed file against the question and the previous question, by path and by contents, and keeps the top 14.
 3. **Routing** sends the shortlist to SubQ Snap (`subq-snap-preview`), which classifies the question and decides which files the writer needs.
 4. **Answering** streams the selected files and the recent conversation to the chosen OpenRouter model. File paths in the answer open in the source viewer.
+
+## Tech stack
+
+- [Next.js 16](https://nextjs.org) App Router with React 19 and TypeScript
+- [Tailwind CSS 4](https://tailwindcss.com) with [shadcn/ui](https://ui.shadcn.com) primitives and [Hugeicons](https://hugeicons.com)
+- [SubQ Snap](https://subq.ai) for routing and file selection, [OpenRouter](https://openrouter.ai) for streamed answers
+- [Streamdown](https://github.com/vercel/streamdown) for Markdown answers and [Shiki](https://shiki.style) for the source viewer
+- Deployed on [Vercel](https://vercel.com)
+
+## Project structure
+
+```
+src/
+├── app/
+│   ├── api/query/          Streams an answer: shortlist, SubQ Snap routing, OpenRouter
+│   ├── api/repositories/   Indexes a public GitHub repository into a snapshot
+│   └── api/status/         Reports whether SubQ Snap and OpenRouter are reachable
+├── components/
+│   ├── query/              Conversation, answer rendering and the composer
+│   ├── workspace/          Shell, welcome screen, file panel, source viewer, dialogs
+│   └── ui/                 Shared primitives
+├── hooks/                  Repository indexing, OpenRouter key storage, highlighting
+├── lib/                    GitHub client, retrieval, SubQ and OpenRouter clients, rate limiting
+└── types/                  Shared snapshot and conversation types
+```
+
+Logic in `src/lib` has unit tests next to it (`*.test.ts`), run with Node's built-in test runner.
 
 ## Local development
 
@@ -53,10 +82,19 @@ Secrets must stay in local environment files or deployment environment settings.
 - Questions are capped at 4,000 characters, and the last four turns are sent as context
 - Each client can index 6 repositories and ask 12 questions per minute
 
-## Checks
+## Scripts
 
-```bash
-pnpm test
-pnpm lint
-pnpm build
-```
+| Command             | What it does                                          |
+| ------------------- | ----------------------------------------------------- |
+| `pnpm dev`          | Starts the development server                         |
+| `pnpm build`        | Builds for production                                 |
+| `pnpm test`         | Runs the unit tests                                   |
+| `pnpm lint`         | Lints with ESLint                                     |
+| `pnpm format`       | Formats with Prettier, including Tailwind class order |
+| `pnpm format:check` | Checks formatting without writing                     |
+
+CI runs `format:check`, `lint`, `test` and `build` on every pull request.
+
+## Contributing
+
+Work on a branch and open a pull request against `main`. Keep commits small and focused, and run `pnpm format` before pushing.
