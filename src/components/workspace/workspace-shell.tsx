@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Braces, Files, KeyRound, Plus } from "@/components/ui/icons";
+import { useCallback, useEffect, useState } from "react";
+import { Braces, KeyRound, Plus } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { AnalysisWorkspace } from "@/components/query/analysis-workspace";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -45,11 +45,11 @@ export function WorkspaceShell() {
       .catch(() => setPipelineStatus({ available: false, snapAvailable: false, openRouterConfigured: false }));
   }, []);
 
-  const openSource = (path: string) => {
+  const openSource = useCallback((path: string) => {
     setSelectedPath(path);
     setFilesOpen(false);
     setSourceOpen(true);
-  };
+  }, []);
 
   const useRepository = (nextRepository: RepositorySnapshot) => {
     setRepository(nextRepository);
@@ -79,7 +79,6 @@ export function WorkspaceShell() {
             <TooltipContent>{openRouterKey ? "Personal OpenRouter key active" : "Add your OpenRouter key"}</TooltipContent>
           </Tooltip>
           <Button size="sm" className="pressable gap-1.5" onClick={() => setRepositoryDialogOpen(true)}><Plus className="size-3.5" /><span className="hidden sm:inline">Add repository</span></Button>
-          <Button variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Browse repository files" onClick={() => setFilesOpen(true)}><Files /></Button>
         </div>
       </header>
 
@@ -93,7 +92,6 @@ export function WorkspaceShell() {
           openRouterKey={openRouterKey}
           onOpenSource={openSource}
           onOpenFiles={() => setFilesOpen(true)}
-          onChangeRepository={() => setRepositoryDialogOpen(true)}
         />
       </div>
 
