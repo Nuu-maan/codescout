@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "name": "My taste",
+  "written": "2026-10-28T17:49:16.997Z",
+  "groups": [],
+  "things": [
+    {
+      "id": "4d238f38-2fea-4b5d-bccf-a7d719ef85ff",
+      "kind": "note",
+      "text": "i want it to look premium",
+      "group": "",
+      "added": "2026-10-28",
+      "place": {
+        "x": -110,
+        "y": -39,
+        "w": 220,
+        "h": 28
+      }
+    },
+    {
+      "id": "dc34b886-47c9-4e27-bda3-e3333f12f382",
+      "kind": "note",
+      "text": "clean",
+      "group": "",
+      "added": "2026-10-28",
+      "place": {
+        "x": -62,
+        "y": -142,
+        "w": 220,
+        "h": 28
+      }
+    },
+    {
+      "id": "6622c71e-d4f8-4376-a5f2-779388938aed",
+      "kind": "note",
+      "text": "not so cheap or AI generated",
+      "group": "",
+      "added": "2026-10-28",
+      "place": {
+        "x": -133,
+        "y": 46,
+        "w": 220,
+        "h": 56
+      }
+    },
+    {
+      "id": "c0c8dbad-0d04-475b-9f1b-fe883891a82c",
+      "kind": "note",
+      "text": "smooth animatinos",
+      "group": "",
+      "added": "2026-10-28",
+      "place": {
+        "x": -76,
+        "y": 162,
+        "w": 220,
+        "h": 28
+      }
+    },
+    {
+      "id": "15f0c599-d87e-420f-ab9b-d88a83480102",
+      "kind": "note",
+      "text": "something like , https://shwn.design/ , https://anishfn.ink/",
+      "group": "",
+      "added": "2026-10-28",
+      "place": {
+        "x": -109,
+        "y": -255,
+        "w": 220,
+        "h": 84
+      }
+    }
+  ]
+}
