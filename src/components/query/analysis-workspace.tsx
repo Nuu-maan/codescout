@@ -140,7 +140,7 @@ export function AnalysisWorkspace({ repository, openRouterKey, onOpenSource, onO
       <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4 sm:px-5">
         <div className="min-w-0">
           <div className="truncate text-sm font-medium text-card-foreground">{repository.fullName}</div>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><GitBranch className="size-3" />{repository.branch}<span>·</span><span>{repository.fileCount} files indexed</span></div>
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><GitBranch className="size-3" />{repository.branch}<span>·</span><span>{repository.fileCount} files indexed{repository.truncated && " (partial)"}</span></div>
         </div>
         <Button variant="ghost" size="sm" className="ms-auto gap-1.5 text-xs lg:hidden" onClick={onOpenFiles}><Files /> Files</Button>
       </header>

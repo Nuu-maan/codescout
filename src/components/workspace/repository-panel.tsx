@@ -72,7 +72,9 @@ export function RepositoryPanel({ selectedPath, onSelect, repository, onChangeRe
 
       <div className="border-t p-3">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{repository.fileCount} files</span>
+          <span title={repository.truncated ? "Large repository. Root files and source folders were indexed first." : undefined}>
+            {repository.fileCount} files{repository.truncated && " · partial"}
+          </span>
           <span className="font-mono">{formatBytes(repository.indexedBytes)} indexed</span>
         </div>
       </div>
