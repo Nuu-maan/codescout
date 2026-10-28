@@ -257,7 +257,7 @@ function ConversationTurnView({ run, paths, onOpenSource, onRetry }: { run: Quer
           {run.answer && !streaming && (
             <MessageFooter className="gap-1 px-0">
               <CopyButton value={run.answer} />
-              {run.status === "complete" && <span className="ms-1 inline-flex items-center gap-1 text-[10px] font-normal text-muted-foreground"><ShieldCheck className="size-3 text-emerald-600" /> Grounded in {selectedPaths.length} files</span>}
+              {run.status === "complete" && <span className="ms-1 inline-flex items-center gap-1 text-[10px] font-normal text-muted-foreground"><ShieldCheck className="size-3 text-emerald-600" /> Grounded in {selectedPaths.length} {selectedPaths.length === 1 ? "file" : "files"}</span>}
               {run.status === "stopped" && <span className="ms-1 text-[10px] text-muted-foreground">Stopped</span>}
             </MessageFooter>
           )}
