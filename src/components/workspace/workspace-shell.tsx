@@ -98,14 +98,14 @@ export function WorkspaceShell() {
           </div>
 
           <Sheet open={filesOpen} onOpenChange={setFilesOpen}>
-            <SheetContent side="left" className="w-[min(92vw,22rem)] p-0 sm:max-w-none">
+            <SheetContent side="left" className="gap-0 p-0 data-[side=left]:w-[min(92vw,22rem)] data-[side=left]:sm:max-w-none">
               <SheetHeader className="sr-only"><SheetTitle>Repository files</SheetTitle><SheetDescription>Browse indexed repository files</SheetDescription></SheetHeader>
               <RepositoryPanel repository={repository} selectedPath={selectedPath} onSelect={openSource} onChangeRepository={() => setRepositoryDialogOpen(true)} />
             </SheetContent>
           </Sheet>
 
           <Sheet open={sourceOpen} onOpenChange={setSourceOpen}>
-            <SheetContent side="right" className="w-[min(96vw,48rem)] p-0 sm:max-w-none">
+            <SheetContent side="right" className="gap-0 p-0 data-[side=right]:w-[min(96vw,56rem)] data-[side=right]:sm:max-w-none" onOpenAutoFocus={(event) => event.preventDefault()}>
               <SheetHeader className="sr-only"><SheetTitle>Source viewer</SheetTitle><SheetDescription>Inspect cited source code</SheetDescription></SheetHeader>
               {selectedPath && <CodeViewer path={selectedPath} repository={repository} />}
             </SheetContent>
