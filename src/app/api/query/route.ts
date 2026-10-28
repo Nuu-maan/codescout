@@ -2,28 +2,38 @@ import { streamRepositoryAnswer } from "@/lib/openrouter";
 import { isResponseModelId } from "@/lib/models";
 import { isValidOpenRouterKey } from "@/lib/openrouter-key";
 import { decideRepositoryRoute } from "@/lib/subq";
+import { readJsonBody } from "@/lib/http";
 
 const MAX_FILES = 120;
 const MAX_CONTEXT_CHARACTERS = 700_000;
+const MAX_QUESTION_CHARACTERS = 4_000;
 
 type QueryPayload = {
   model?: unknown;
-  question?: string;
+  question?: unknown;
   repository?: {
-    fullName?: string;
-    files?: Record<string, unknown>;
+    fullName?: unknown;
+    files?: unknown;
   };
 };
 
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as QueryPayload;
-  const question = payload.question?.trim();
+  const payload = await readJsonBody<QueryPayload>(request);
+  if (!payload) {
+    return Response.json({ error: "The request body must be a JSON object." }, { status: 400 });
+  }
+
+  const question = typeof payload.question === "string" ? payload.question.trim() : "";
   const suppliedOpenRouterKey = request.headers.get("x-openrouter-key")?.trim();
 
   if (!question) {
     return Response.json({ error: "Enter a question about the repository." }, { status: 400 });
+  }
+
+  if (question.length > MAX_QUESTION_CHARACTERS) {
+    return Response.json({ error: `Keep questions under ${MAX_QUESTION_CHARACTERS.toLocaleString("en-US")} characters.` }, { status: 413 });
   }
 
   if (!isResponseModelId(payload.model)) {
@@ -41,7 +51,7 @@ export async function POST(request: Request) {
     const decision = await decideRepositoryRoute(
       question,
       repositoryFiles,
-      payload.repository?.fullName ?? "repository",
+      getRepositoryName(payload.repository?.fullName),
     );
     const selectedFiles = decision.selectedFiles.length
       ? decision.selectedFiles
@@ -83,8 +93,12 @@ export async function POST(request: Request) {
   }
 }
 
-function validateRepositoryFiles(input?: Record<string, unknown>) {
-  if (!input || Array.isArray(input)) {
+function getRepositoryName(value: unknown) {
+  return typeof value === "string" && value.length <= 200 ? value : "repository";
+}
+
+function validateRepositoryFiles(input: unknown) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
     return Response.json({ error: "Add a repository before running an analysis." }, { status: 400 });
   }
 
