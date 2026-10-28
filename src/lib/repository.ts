@@ -75,22 +75,31 @@ export function languageForPath(path: string) {
   return languages[extension ?? ""] ?? "Text";
 }
 
-export function selectCandidatePaths(question: string, paths: string[], limit = 14) {
-  const ignored = new Set(["a", "about", "and", "are", "does", "file", "files", "for", "how", "in", "is", "it", "of", "the", "this", "to", "what", "where", "which"]);
-  const tokens = question.toLowerCase().match(/[a-z0-9]+/g)?.filter((token) => token.length > 1 && !ignored.has(token)) ?? [];
+export function selectCandidatePaths(question: string, files: Record<string, string>, limit = 14) {
+  const ignored = new Set(["a", "about", "an", "and", "are", "can", "do", "does", "file", "files", "for", "how", "in", "is", "it", "of", "on", "the", "this", "to", "what", "where", "which", "why", "with", "work", "works"]);
+  const tokens = [...new Set(question.toLowerCase().match(/[a-z0-9_]+/g)?.filter((token) => token.length > 1 && !ignored.has(token)) ?? [])];
+  const stems = tokens.map((token) => token.length > 4 ? token.replace(/(?:ies|es|s|ing|ed)$/, "") : token);
 
-  return paths
-    .map((path) => {
+  return Object.entries(files)
+    .map(([path, content]) => {
       const normalized = path.toLowerCase();
       const basename = normalized.split("/").pop() ?? normalized;
-      const tokenScore = tokens.reduce((score, token) => score + (normalized.includes(token) ? 12 : 0) + (basename.startsWith(token) ? 6 : 0), 0);
+      const text = content.toLowerCase();
+      const pathScore = stems.reduce((score, stem) => score + (normalized.includes(stem) ? 12 : 0) + (basename.startsWith(stem) ? 6 : 0), 0);
+      const contentScore = stems.reduce((score, stem) => score + Math.min(countOccurrences(text, stem), 5), 0);
       const landmarkScore = /(^|\/)(readme|package\.json|tsconfig\.json|dockerfile|makefile|index\.|main\.|page\.|route\.)/i.test(path) ? 5 : 0;
       const sourceScore = /^(src|app|lib|packages)\//.test(path) ? 2 : 0;
-      return { path, score: tokenScore + landmarkScore + sourceScore };
+      return { path, score: pathScore + contentScore + landmarkScore + sourceScore };
     })
     .sort((a, b) => b.score - a.score || a.path.localeCompare(b.path))
     .slice(0, limit)
     .map(({ path }) => path);
+}
+
+function countOccurrences(text: string, term: string) {
+  let count = 0;
+  for (let index = text.indexOf(term); index !== -1 && count < 5; index = text.indexOf(term, index + term.length)) count += 1;
+  return count;
 }
 
 export function selectSourceFiles(entries: SourceFileEntry[]) {

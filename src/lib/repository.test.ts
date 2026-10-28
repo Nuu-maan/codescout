@@ -18,10 +18,19 @@ test("builds a nested file tree from repository paths", () => {
 });
 
 test("shortlists paths that match the repository question", () => {
-  const paths = ["README.md", "src/app/page.tsx", "src/app/api/github/files/route.ts", "src/lib/theme.ts"];
-  const selected = selectCandidatePaths("Where are GitHub files loaded?", paths, 2);
+  const files = Object.fromEntries(["README.md", "src/app/page.tsx", "src/app/api/github/files/route.ts", "src/lib/theme.ts"].map((path) => [path, ""]));
+  const selected = selectCandidatePaths("Where are GitHub files loaded?", files, 2);
   assert.equal(selected[0], "src/app/api/github/files/route.ts");
   assert.equal(selected.length, 2);
+});
+
+test("shortlists files whose contents mention the question terms", () => {
+  const selected = selectCandidatePaths("How do retries work?", {
+    "src/core/client.ts": "const retryCount = 0;\nfunction retry() { return shouldRetry(); }",
+    "src/utils/format.ts": "export const format = (value) => value;",
+    "src/utils/merge.ts": "export const merge = (a, b) => ({ ...a, ...b });",
+  }, 1);
+  assert.deepEqual(selected, ["src/core/client.ts"]);
 });
 
 test("indexes root landmarks first and keeps filling after a file that does not fit", () => {

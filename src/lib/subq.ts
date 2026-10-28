@@ -33,7 +33,7 @@ export async function decideRepositoryRoute(
   repositoryFiles: Record<string, string>,
   repositoryName = "repository",
 ): Promise<RepositoryDecision> {
-  const candidatePaths = selectCandidatePaths(question, Object.keys(repositoryFiles));
+  const candidatePaths = selectCandidatePaths(question, repositoryFiles);
   const files = candidatePaths.map((path, index) => ({
     id: `file_${index}`,
     path,
