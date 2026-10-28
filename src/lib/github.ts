@@ -96,17 +96,21 @@ async function githubJson<T>(url: string): Promise<T> {
 }
 
 async function githubFetch(url: string, accept = "application/vnd.github+json") {
+  const token = process.env.GITHUB_TOKEN;
   const response = await fetch(url, {
     headers: {
       Accept: accept,
       "User-Agent": "CodeScout",
       "X-GitHub-Api-Version": "2022-11-28",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     signal: AbortSignal.timeout(20_000),
   });
 
   if (response.status === 404) throw new Error("Repository not found. Make sure it is public and the URL is correct.");
-  if (response.status === 403) throw new Error("GitHub rate limit reached. Try again in a few minutes.");
+  if (response.status === 429 || (response.status === 403 && response.headers.get("x-ratelimit-remaining") === "0")) {
+    throw new Error("GitHub rate limit reached. Try again in a few minutes.");
+  }
   if (response.status === 409) throw new Error("This repository is empty.");
   if (!response.ok) throw new Error(`GitHub could not load this repository (${response.status}).`);
   return response;
