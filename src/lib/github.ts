@@ -20,7 +20,6 @@ type GitHubRepository = {
 };
 
 type GitHubTree = {
-  sha: string;
   truncated: boolean;
   tree: Array<{ path: string; type: "blob" | "tree"; size?: number }>;
 };
@@ -32,8 +31,13 @@ export async function indexPublicGitHubRepository(value: string): Promise<Reposi
   if (repository.private) throw new Error("Private repositories are not supported yet.");
 
   const branch = repository.default_branch;
+  const commit = (await githubFetch(
+    `https://api.github.com/repos/${ref.owner}/${ref.name}/commits/${encodeURIComponent(branch)}`,
+    "application/vnd.github.sha",
+  ).then((response) => response.text())).trim();
+  if (!/^[0-9a-f]{40}$/.test(commit)) throw new Error("GitHub returned an unexpected commit for this repository.");
   const gitTree = await githubJson<GitHubTree>(
-    `https://api.github.com/repos/${ref.owner}/${ref.name}/git/trees/${encodeURIComponent(branch)}?recursive=1`,
+    `https://api.github.com/repos/${ref.owner}/${ref.name}/git/trees/${commit}?recursive=1`,
   );
   const candidates = gitTree.tree
     .filter((item) => item.type === "blob" && supportedFiles.test(item.path) && !excludedPaths.test(item.path))
@@ -55,7 +59,7 @@ export async function indexPublicGitHubRepository(value: string): Promise<Reposi
   for (let index = 0; index < selected.length; index += FETCH_BATCH_SIZE) {
     const batch = selected.slice(index, index + FETCH_BATCH_SIZE);
     const contents = await Promise.all(batch.map(async (file) => {
-      const rawUrl = `https://raw.githubusercontent.com/${ref.owner}/${ref.name}/${encodeURIComponent(branch)}/${encodePath(file.path)}`;
+      const rawUrl = `https://raw.githubusercontent.com/${ref.owner}/${ref.name}/${commit}/${encodePath(file.path)}`;
       const response = await fetch(rawUrl, { signal: AbortSignal.timeout(15_000) });
       if (!response.ok) return null;
       return [file.path, await response.text()] as const;
@@ -70,13 +74,13 @@ export async function indexPublicGitHubRepository(value: string): Promise<Reposi
   const languages = [...new Set(paths.map(languageForPath))].sort();
 
   return {
-    id: `${repository.full_name}@${gitTree.sha.slice(0, 12)}`,
+    id: `${repository.full_name}@${commit}`,
     owner: ref.owner,
     name: ref.name,
     fullName: repository.full_name,
     url: repository.html_url,
     branch,
-    commit: gitTree.sha.slice(0, 12),
+    commit,
     description: repository.description,
     files,
     tree: createFileTree(paths),
@@ -88,9 +92,13 @@ export async function indexPublicGitHubRepository(value: string): Promise<Reposi
 }
 
 async function githubJson<T>(url: string): Promise<T> {
+  return githubFetch(url).then((response) => response.json() as Promise<T>);
+}
+
+async function githubFetch(url: string, accept = "application/vnd.github+json") {
   const response = await fetch(url, {
     headers: {
-      Accept: "application/vnd.github+json",
+      Accept: accept,
       "User-Agent": "CodeScout",
       "X-GitHub-Api-Version": "2022-11-28",
     },
@@ -99,8 +107,9 @@ async function githubJson<T>(url: string): Promise<T> {
 
   if (response.status === 404) throw new Error("Repository not found. Make sure it is public and the URL is correct.");
   if (response.status === 403) throw new Error("GitHub rate limit reached. Try again in a few minutes.");
+  if (response.status === 409) throw new Error("This repository is empty.");
   if (!response.ok) throw new Error(`GitHub could not load this repository (${response.status}).`);
-  return response.json() as Promise<T>;
+  return response;
 }
 
 function compareSourcePriority(a: { path: string; size?: number }, b: { path: string; size?: number }) {
