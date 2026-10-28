@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useState } from "react";
-import { ArrowUp, BrainCircuit, ChevronDown, GitBranch, KeyRound, ScanSearch, Stop } from "@/components/ui/icons";
+import { ArrowUp, ChevronDown, KeyRound, Stop } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -48,7 +48,7 @@ export function QueryBar({ submitting, onSubmit, onStop, model, onModelChange, h
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-3xl border bg-card p-2 shadow-[0_8px_30px_oklch(0_0_0/0.08)] focus-within:border-foreground/20" aria-label="Ask about repository">
+    <form onSubmit={handleSubmit} className="rounded-[22px] bg-card p-2 shadow-raised transition-shadow duration-200 ease-out-quint focus-within:shadow-popover" aria-label="Ask about repository">
       <Textarea
         value={value}
         onChange={(event) => setValue(event.target.value)}
@@ -56,13 +56,12 @@ export function QueryBar({ submitting, onSubmit, onStop, model, onModelChange, h
         placeholder={`Ask anything about ${repositoryName}`}
         maxLength={4_000}
         aria-label="Question about the repository"
-        className="max-h-40 min-h-14 resize-none border-0 bg-transparent px-3 py-2.5 text-sm shadow-none focus-visible:ring-0"
+        className="max-h-40 min-h-14 resize-none border-0 bg-transparent px-3 py-2.5 text-base text-card-foreground shadow-none focus-visible:ring-0 sm:text-[15px] dark:bg-transparent"
       />
       <div className="flex items-center gap-2 px-2 pb-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-6 max-w-48 gap-1 rounded-md px-1.5 text-[10px] font-normal text-muted-foreground" disabled={submitting}>
-              <BrainCircuit className="size-3" />
+            <Button variant="ghost" size="sm" className="h-7 max-w-48 gap-1 rounded-[10px] px-2 text-[12px] font-normal text-muted-foreground" disabled={submitting}>
               <span className="truncate">{selectedModel.name}</span>
               <ChevronDown className="size-3" />
             </Button>
@@ -86,16 +85,14 @@ export function QueryBar({ submitting, onSubmit, onStop, model, onModelChange, h
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
-        {hasPersonalKey && <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400"><KeyRound className="size-3" /> your key</span>}
-        <span className="hidden items-center gap-1 text-[10px] text-muted-foreground sm:inline-flex"><GitBranch className="size-3" /> repository context</span>
-        <span className="hidden items-center gap-1 text-[10px] text-muted-foreground sm:inline-flex"><ScanSearch className="size-3" /> Snap routing</span>
+        {hasPersonalKey && <span className="inline-flex animate-enter items-center gap-1 text-[11px] text-success"><KeyRound className="size-3" /> your key</span>}
         {submitting ? (
-          <Button type="button" size="icon-sm" className="pressable ms-auto rounded-full" onClick={onStop} aria-label="Stop answer">
-            <Stop />
+          <Button type="button" size="icon-sm" className="ms-auto rounded-full" onClick={onStop} aria-label="Stop answer">
+            <Stop className="animate-icon-in" />
           </Button>
         ) : (
-          <Button type="submit" size="icon-sm" className="pressable ms-auto rounded-full" disabled={!value.trim()} aria-label="Send question">
-            <ArrowUp />
+          <Button type="submit" size="icon-sm" className="ms-auto rounded-full" disabled={!value.trim()} aria-label="Send question">
+            <ArrowUp className="animate-icon-in" />
           </Button>
         )}
       </div>
