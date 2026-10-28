@@ -52,6 +52,7 @@ export async function POST(request: Request) {
       question,
       repositoryFiles,
       getRepositoryName(payload.repository?.fullName),
+      request.signal,
     );
     const selectedFiles = decision.selectedFiles.length
       ? decision.selectedFiles

@@ -32,6 +32,7 @@ export async function decideRepositoryRoute(
   question: string,
   repositoryFiles: Record<string, string>,
   repositoryName = "repository",
+  signal?: AbortSignal,
 ): Promise<RepositoryDecision> {
   const candidatePaths = selectCandidatePaths(question, repositoryFiles);
   const files = candidatePaths.map((path, index) => ({
@@ -52,9 +53,11 @@ export async function decideRepositoryRoute(
       },
     ]),
   );
+  const timeout = AbortSignal.timeout(30_000);
   const response = await fetch(`${SUBQ_API_URL}/systemone`, {
     method: "POST",
     headers: createSubQHeaders(),
+    signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     body: JSON.stringify({
       model: "subq-snap-preview",
       state: { question, repository: repositoryName, files },
@@ -79,6 +82,9 @@ export async function decideRepositoryRoute(
         ...fileQuestions,
       },
     }),
+  }).catch((error: unknown) => {
+    if (timeout.aborted) throw new Error("SubQ Snap took too long to choose source files. Try again.");
+    throw error;
   });
 
   if (!response.ok) {
