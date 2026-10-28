@@ -14,13 +14,13 @@ import { CodeViewer } from "@/components/workspace/code-viewer";
 import { RepositoryDialog } from "@/components/workspace/repository-dialog";
 import { OpenRouterKeyDialog } from "@/components/workspace/openrouter-key-dialog";
 import { RepositoryPanel } from "@/components/workspace/repository-panel";
+import { RepositoryWelcome } from "@/components/workspace/repository-welcome";
 import { useOpenRouterKey } from "@/hooks/use-openrouter-key";
-import { defaultRepository } from "@/lib/demo-data";
 import type { RepositorySnapshot } from "@/types/workspace";
 
 export function WorkspaceShell() {
-  const [repository, setRepository] = useState(defaultRepository);
-  const [selectedPath, setSelectedPath] = useState(Object.keys(defaultRepository.files)[0]);
+  const [repository, setRepository] = useState<RepositorySnapshot | null>(null);
+  const [selectedPath, setSelectedPath] = useState("");
   const [repositoryDialogOpen, setRepositoryDialogOpen] = useState(false);
   const [openRouterKeyDialogOpen, setOpenRouterKeyDialogOpen] = useState(false);
   const [filesOpen, setFilesOpen] = useState(false);
@@ -51,12 +51,12 @@ export function WorkspaceShell() {
     setSourceOpen(true);
   }, []);
 
-  const useRepository = (nextRepository: RepositorySnapshot) => {
+  const selectRepository = useCallback((nextRepository: RepositorySnapshot) => {
     setRepository(nextRepository);
-    setSelectedPath(Object.keys(nextRepository.files)[0]);
+    setSelectedPath("");
     setSourceOpen(false);
     setFilesOpen(false);
-  };
+  }, []);
 
   return (
     <div className="flex h-dvh min-h-[40rem] flex-col overflow-hidden bg-background">
@@ -78,38 +78,44 @@ export function WorkspaceShell() {
             <TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className={openRouterKey ? "text-emerald-600 dark:text-emerald-400" : undefined} aria-label="OpenRouter API key" onClick={() => setOpenRouterKeyDialogOpen(true)}><KeyRound /></Button></TooltipTrigger>
             <TooltipContent>{openRouterKey ? "Personal OpenRouter key active" : "Add your OpenRouter key"}</TooltipContent>
           </Tooltip>
-          <Button size="sm" className="pressable gap-1.5" onClick={() => setRepositoryDialogOpen(true)}><Plus className="size-3.5" /><span className="hidden sm:inline">Add repository</span></Button>
+          {repository && <Button size="sm" className="pressable gap-1.5" onClick={() => setRepositoryDialogOpen(true)}><Plus className="size-3.5" /><span className="hidden sm:inline">Add repository</span></Button>}
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
-        <div className="hidden w-72 shrink-0 border-r lg:block">
-          <RepositoryPanel repository={repository} selectedPath={selectedPath} onSelect={openSource} onChangeRepository={() => setRepositoryDialogOpen(true)} />
-        </div>
-        <AnalysisWorkspace
-          key={repository.id}
-          repository={repository}
-          openRouterKey={openRouterKey}
-          onOpenSource={openSource}
-          onOpenFiles={() => setFilesOpen(true)}
-        />
-      </div>
+      {repository ? (
+        <>
+          <div className="flex min-h-0 flex-1">
+            <div className="hidden w-72 shrink-0 border-r lg:block">
+              <RepositoryPanel repository={repository} selectedPath={selectedPath} onSelect={openSource} onChangeRepository={() => setRepositoryDialogOpen(true)} />
+            </div>
+            <AnalysisWorkspace
+              key={repository.id}
+              repository={repository}
+              openRouterKey={openRouterKey}
+              onOpenSource={openSource}
+              onOpenFiles={() => setFilesOpen(true)}
+            />
+          </div>
 
-      <Sheet open={filesOpen} onOpenChange={setFilesOpen}>
-        <SheetContent side="left" className="w-[min(92vw,22rem)] p-0 sm:max-w-none">
-          <SheetHeader className="sr-only"><SheetTitle>Repository files</SheetTitle><SheetDescription>Browse indexed repository files</SheetDescription></SheetHeader>
-          <RepositoryPanel repository={repository} selectedPath={selectedPath} onSelect={openSource} onChangeRepository={() => setRepositoryDialogOpen(true)} />
-        </SheetContent>
-      </Sheet>
+          <Sheet open={filesOpen} onOpenChange={setFilesOpen}>
+            <SheetContent side="left" className="w-[min(92vw,22rem)] p-0 sm:max-w-none">
+              <SheetHeader className="sr-only"><SheetTitle>Repository files</SheetTitle><SheetDescription>Browse indexed repository files</SheetDescription></SheetHeader>
+              <RepositoryPanel repository={repository} selectedPath={selectedPath} onSelect={openSource} onChangeRepository={() => setRepositoryDialogOpen(true)} />
+            </SheetContent>
+          </Sheet>
 
-      <Sheet open={sourceOpen} onOpenChange={setSourceOpen}>
-        <SheetContent side="right" className="w-[min(96vw,48rem)] p-0 sm:max-w-none">
-          <SheetHeader className="sr-only"><SheetTitle>Source viewer</SheetTitle><SheetDescription>Inspect cited source code</SheetDescription></SheetHeader>
-          <CodeViewer path={selectedPath} repository={repository} />
-        </SheetContent>
-      </Sheet>
+          <Sheet open={sourceOpen} onOpenChange={setSourceOpen}>
+            <SheetContent side="right" className="w-[min(96vw,48rem)] p-0 sm:max-w-none">
+              <SheetHeader className="sr-only"><SheetTitle>Source viewer</SheetTitle><SheetDescription>Inspect cited source code</SheetDescription></SheetHeader>
+              {selectedPath && <CodeViewer path={selectedPath} repository={repository} />}
+            </SheetContent>
+          </Sheet>
+        </>
+      ) : (
+        <RepositoryWelcome onIndexed={selectRepository} />
+      )}
 
-      <RepositoryDialog open={repositoryDialogOpen} onOpenChange={setRepositoryDialogOpen} onIndexed={useRepository} />
+      <RepositoryDialog open={repositoryDialogOpen} onOpenChange={setRepositoryDialogOpen} onIndexed={selectRepository} />
       {openRouterKeyDialogOpen && (
         <OpenRouterKeyDialog
           initialKey={openRouterKey}
