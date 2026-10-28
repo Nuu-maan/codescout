@@ -71,10 +71,9 @@ export async function POST(request: Request) {
     });
 
     if (!response.ok || !response.body) {
-      const detail = await response.text();
       return Response.json(
-        { error: detail || "OpenRouter could not answer this question." },
-        { status: response.status || 502 },
+        { error: await getOpenRouterError(response, Boolean(suppliedOpenRouterKey)) },
+        { status: response.status === 401 || response.status === 402 || response.status === 429 ? response.status : 502 },
       );
     }
 
@@ -122,6 +121,15 @@ function validateRepositoryFiles(input: unknown) {
   }
 
   return files;
+}
+
+async function getOpenRouterError(response: Response, personalKey: boolean) {
+  if (response.status === 401) {
+    return personalKey ? "OpenRouter rejected your key. Check it in the key settings." : "OpenRouter rejected the server key.";
+  }
+  if (response.status === 429) return "This model is busy right now. Try again shortly or pick another model.";
+  const payload = (await response.json().catch(() => null)) as { error?: { message?: unknown } } | null;
+  return typeof payload?.error?.message === "string" ? payload.error.message : "OpenRouter could not answer this question.";
 }
 
 function withMetadata(

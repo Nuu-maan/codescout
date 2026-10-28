@@ -32,10 +32,10 @@ export async function streamRepositoryAnswer({
   repositoryContext: string;
   signal?: AbortSignal;
 }) {
-  const apiKey = suppliedApiKey ?? getOpenRouterKey();
+  const apiKey = suppliedApiKey || getOpenRouterKey();
 
   if (!apiKey) {
-    throw new Error("OPENROUTER is not configured.");
+    throw new Error("Add your OpenRouter key to ask questions.");
   }
 
   return fetch(`${OPENROUTER_API_URL}/chat/completions`, {
