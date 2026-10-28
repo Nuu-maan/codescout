@@ -2,28 +2,45 @@ import { streamRepositoryAnswer } from "@/lib/openrouter";
 import { isResponseModelId } from "@/lib/models";
 import { isValidOpenRouterKey } from "@/lib/openrouter-key";
 import { decideRepositoryRoute } from "@/lib/subq";
+import { rateLimit, readJsonBody } from "@/lib/http";
+import { MAX_INDEXED_FILES } from "@/lib/repository";
+import type { ConversationTurn } from "@/types/workspace";
 
-const MAX_FILES = 120;
 const MAX_CONTEXT_CHARACTERS = 700_000;
+const MAX_QUESTION_CHARACTERS = 4_000;
+const MAX_HISTORY_TURNS = 4;
+const MAX_HISTORY_ANSWER_CHARACTERS = 6_000;
 
 type QueryPayload = {
+  history?: unknown;
   model?: unknown;
-  question?: string;
+  question?: unknown;
   repository?: {
-    fullName?: string;
-    files?: Record<string, unknown>;
+    fullName?: unknown;
+    files?: unknown;
   };
 };
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
-  const payload = (await request.json()) as QueryPayload;
-  const question = payload.question?.trim();
+  const limited = rateLimit(request, "query", 12);
+  if (limited) return limited;
+
+  const payload = await readJsonBody<QueryPayload>(request);
+  if (!payload) {
+    return Response.json({ error: "The request body must be a JSON object." }, { status: 400 });
+  }
+
+  const question = typeof payload.question === "string" ? payload.question.trim() : "";
   const suppliedOpenRouterKey = request.headers.get("x-openrouter-key")?.trim();
 
   if (!question) {
     return Response.json({ error: "Enter a question about the repository." }, { status: 400 });
+  }
+
+  if (question.length > MAX_QUESTION_CHARACTERS) {
+    return Response.json({ error: `Keep questions under ${MAX_QUESTION_CHARACTERS.toLocaleString("en-US")} characters.` }, { status: 413 });
   }
 
   if (!isResponseModelId(payload.model)) {
@@ -37,12 +54,14 @@ export async function POST(request: Request) {
   const repositoryFiles = validateRepositoryFiles(payload.repository?.files);
   if (repositoryFiles instanceof Response) return repositoryFiles;
 
+  const history = getHistory(payload.history);
+
   try {
-    const decision = await decideRepositoryRoute(
-      question,
-      repositoryFiles,
-      payload.repository?.fullName ?? "repository",
-    );
+    const decision = await decideRepositoryRoute(question, repositoryFiles, {
+      repositoryName: getRepositoryName(payload.repository?.fullName),
+      previousQuestions: history.map((turn) => turn.question),
+      signal: request.signal,
+    });
     const selectedFiles = decision.selectedFiles.length
       ? decision.selectedFiles
       : decision.consideredFiles;
@@ -53,6 +72,7 @@ export async function POST(request: Request) {
     const response = await streamRepositoryAnswer({
       apiKey: suppliedOpenRouterKey,
       question,
+      history,
       decision,
       model: payload.model,
       repositoryContext,
@@ -60,10 +80,9 @@ export async function POST(request: Request) {
     });
 
     if (!response.ok || !response.body) {
-      const detail = await response.text();
       return Response.json(
-        { error: detail || "OpenRouter could not answer this question." },
-        { status: response.status || 502 },
+        { error: await getOpenRouterError(response, Boolean(suppliedOpenRouterKey)) },
+        { status: response.status === 401 || response.status === 402 || response.status === 429 ? response.status : 502 },
       );
     }
 
@@ -83,14 +102,29 @@ export async function POST(request: Request) {
   }
 }
 
-function validateRepositoryFiles(input?: Record<string, unknown>) {
-  if (!input || Array.isArray(input)) {
+function getHistory(value: unknown): ConversationTurn[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((turn): turn is ConversationTurn => typeof turn?.question === "string" && typeof turn?.answer === "string" && Boolean(turn.answer))
+    .slice(-MAX_HISTORY_TURNS)
+    .map((turn) => ({
+      question: turn.question.slice(0, MAX_QUESTION_CHARACTERS),
+      answer: turn.answer.slice(0, MAX_HISTORY_ANSWER_CHARACTERS),
+    }));
+}
+
+function getRepositoryName(value: unknown) {
+  return typeof value === "string" && value.length <= 200 ? value : "repository";
+}
+
+function validateRepositoryFiles(input: unknown) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
     return Response.json({ error: "Add a repository before running an analysis." }, { status: 400 });
   }
 
   const entries = Object.entries(input);
-  if (!entries.length || entries.length > MAX_FILES) {
-    return Response.json({ error: `Repository snapshots must contain between 1 and ${MAX_FILES} files.` }, { status: 413 });
+  if (!entries.length || entries.length > MAX_INDEXED_FILES) {
+    return Response.json({ error: `Repository snapshots must contain between 1 and ${MAX_INDEXED_FILES} files.` }, { status: 413 });
   }
 
   let totalCharacters = 0;
@@ -109,27 +143,23 @@ function validateRepositoryFiles(input?: Record<string, unknown>) {
   return files;
 }
 
+async function getOpenRouterError(response: Response, personalKey: boolean) {
+  if (response.status === 401) {
+    return personalKey ? "OpenRouter rejected your key. Check it in the key settings." : "OpenRouter rejected the server key.";
+  }
+  if (response.status === 429) return "This model is busy right now. Try again shortly or pick another model.";
+  const payload = (await response.json().catch(() => null)) as { error?: { message?: unknown } } | null;
+  return typeof payload?.error?.message === "string" ? payload.error.message : "OpenRouter could not answer this question.";
+}
+
 function withMetadata(
   upstream: ReadableStream<Uint8Array>,
   metadata: { route: string; confidence: number; selectedPaths: string[] },
 ) {
-  const encoder = new TextEncoder();
-  return new ReadableStream<Uint8Array>({
-    async start(controller) {
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "codescout.metadata", ...metadata })}\n\n`));
-      const reader = upstream.getReader();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          controller.enqueue(value);
-        }
-        controller.close();
-      } catch (error) {
-        controller.error(error);
-      } finally {
-        reader.releaseLock();
-      }
+  const event = new TextEncoder().encode(`data: ${JSON.stringify({ type: "codescout.metadata", ...metadata })}\n\n`);
+  return upstream.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+    start(controller) {
+      controller.enqueue(event);
     },
-  });
+  }));
 }

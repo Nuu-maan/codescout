@@ -1,15 +1,9 @@
 import "server-only";
 
-import { createFileTree, languageForPath, parseGitHubRepositoryUrl } from "@/lib/repository";
+import { createFileTree, languageForPath, parseGitHubRepositoryUrl, selectSourceFiles } from "@/lib/repository";
 import type { RepositorySnapshot } from "@/types/workspace";
 
-const MAX_FILES = 120;
-const MAX_FILE_BYTES = 60_000;
-const MAX_TOTAL_BYTES = 650_000;
 const FETCH_BATCH_SIZE = 12;
-
-const supportedFiles = /(^|\/)(Dockerfile|Makefile|README(?:\.[^/]+)?|package\.json|tsconfig\.json)$|\.(?:c|cc|cpp|cs|css|go|graphql|gql|h|hpp|html|java|js|jsx|json|kt|kts|md|mdx|php|prisma|py|rb|rs|scss|sh|sql|svelte|swift|toml|ts|tsx|vue|xml|yaml|yml)$/i;
-const excludedPaths = /(^|\/)(?:\.git|\.next|\.nuxt|\.output|build|coverage|dist|node_modules|target|vendor)(\/|$)|(?:\.lock|\.min\.js|\.map)$/i;
 
 type GitHubRepository = {
   default_branch: string;
@@ -20,7 +14,6 @@ type GitHubRepository = {
 };
 
 type GitHubTree = {
-  sha: string;
   truncated: boolean;
   tree: Array<{ path: string; type: "blob" | "tree"; size?: number }>;
 };
@@ -32,22 +25,17 @@ export async function indexPublicGitHubRepository(value: string): Promise<Reposi
   if (repository.private) throw new Error("Private repositories are not supported yet.");
 
   const branch = repository.default_branch;
+  const commit = (await githubFetch(
+    `https://api.github.com/repos/${ref.owner}/${ref.name}/commits/${encodeURIComponent(branch)}`,
+    "application/vnd.github.sha",
+  ).then((response) => response.text())).trim();
+  if (!/^[0-9a-f]{40}$/.test(commit)) throw new Error("GitHub returned an unexpected commit for this repository.");
   const gitTree = await githubJson<GitHubTree>(
-    `https://api.github.com/repos/${ref.owner}/${ref.name}/git/trees/${encodeURIComponent(branch)}?recursive=1`,
+    `https://api.github.com/repos/${ref.owner}/${ref.name}/git/trees/${commit}?recursive=1`,
   );
-  const candidates = gitTree.tree
-    .filter((item) => item.type === "blob" && supportedFiles.test(item.path) && !excludedPaths.test(item.path))
-    .filter((item) => (item.size ?? 0) <= MAX_FILE_BYTES)
-    .sort(compareSourcePriority);
-
-  const selected: typeof candidates = [];
-  let selectedBytes = 0;
-  for (const candidate of candidates) {
-    const size = candidate.size ?? 0;
-    if (selected.length >= MAX_FILES || selectedBytes + size > MAX_TOTAL_BYTES) break;
-    selected.push(candidate);
-    selectedBytes += size;
-  }
+  const { selected, candidateCount } = selectSourceFiles(
+    gitTree.tree.filter((item) => item.type === "blob").map(({ path, size }) => ({ path, size: size ?? 0 })),
+  );
 
   if (!selected.length) throw new Error("No supported source files were found in this repository.");
 
@@ -55,10 +43,13 @@ export async function indexPublicGitHubRepository(value: string): Promise<Reposi
   for (let index = 0; index < selected.length; index += FETCH_BATCH_SIZE) {
     const batch = selected.slice(index, index + FETCH_BATCH_SIZE);
     const contents = await Promise.all(batch.map(async (file) => {
-      const rawUrl = `https://raw.githubusercontent.com/${ref.owner}/${ref.name}/${encodeURIComponent(branch)}/${encodePath(file.path)}`;
-      const response = await fetch(rawUrl, { signal: AbortSignal.timeout(15_000) });
-      if (!response.ok) return null;
-      return [file.path, await response.text()] as const;
+      const rawUrl = `https://raw.githubusercontent.com/${ref.owner}/${ref.name}/${commit}/${encodePath(file.path)}`;
+      try {
+        const response = await fetch(rawUrl, { signal: AbortSignal.timeout(15_000) });
+        return response.ok ? [file.path, await response.text()] as const : null;
+      } catch {
+        return null;
+      }
     }));
     for (const entry of contents) if (entry) files[entry[0]] = entry[1];
   }
@@ -70,48 +61,46 @@ export async function indexPublicGitHubRepository(value: string): Promise<Reposi
   const languages = [...new Set(paths.map(languageForPath))].sort();
 
   return {
-    id: `${repository.full_name}@${gitTree.sha.slice(0, 12)}`,
+    id: `${repository.full_name}@${commit}`,
     owner: ref.owner,
     name: ref.name,
     fullName: repository.full_name,
     url: repository.html_url,
     branch,
-    commit: gitTree.sha.slice(0, 12),
+    commit,
     description: repository.description,
     files,
     tree: createFileTree(paths),
     fileCount: paths.length,
     indexedBytes,
     languages,
-    truncated: gitTree.truncated || paths.length < candidates.length,
+    truncated: gitTree.truncated || paths.length < candidateCount,
   };
 }
 
 async function githubJson<T>(url: string): Promise<T> {
+  return githubFetch(url).then((response) => response.json() as Promise<T>);
+}
+
+async function githubFetch(url: string, accept = "application/vnd.github+json") {
+  const token = process.env.GITHUB_TOKEN;
   const response = await fetch(url, {
     headers: {
-      Accept: "application/vnd.github+json",
+      Accept: accept,
       "User-Agent": "CodeScout",
       "X-GitHub-Api-Version": "2022-11-28",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     signal: AbortSignal.timeout(20_000),
   });
 
   if (response.status === 404) throw new Error("Repository not found. Make sure it is public and the URL is correct.");
-  if (response.status === 403) throw new Error("GitHub rate limit reached. Try again in a few minutes.");
+  if (response.status === 429 || (response.status === 403 && response.headers.get("x-ratelimit-remaining") === "0")) {
+    throw new Error("GitHub rate limit reached. Try again in a few minutes.");
+  }
+  if (response.status === 409) throw new Error("This repository is empty.");
   if (!response.ok) throw new Error(`GitHub could not load this repository (${response.status}).`);
-  return response.json() as Promise<T>;
-}
-
-function compareSourcePriority(a: { path: string; size?: number }, b: { path: string; size?: number }) {
-  return sourcePriority(a.path) - sourcePriority(b.path) || (a.size ?? 0) - (b.size ?? 0) || a.path.localeCompare(b.path);
-}
-
-function sourcePriority(path: string) {
-  if (/^(?:src|app|lib|packages)\//.test(path)) return 0;
-  if (/(?:^|\/)(?:package\.json|README(?:\.|$)|Dockerfile|Makefile|tsconfig\.json)$/i.test(path)) return 1;
-  if (/(?:^|\/)(?:test|tests|spec|__tests__)(?:\/|$)/i.test(path)) return 3;
-  return 2;
+  return response;
 }
 
 function encodePath(path: string) {

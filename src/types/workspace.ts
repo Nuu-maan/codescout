@@ -22,3 +22,8 @@ export type RepositorySnapshot = {
   languages: string[];
   truncated: boolean;
 };
+
+export type ConversationTurn = {
+  question: string;
+  answer: string;
+};

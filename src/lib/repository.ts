@@ -7,15 +7,27 @@ export type GitHubRepositoryRef = {
 
 const repositoryPart = /^[A-Za-z0-9_.-]+$/;
 
+export const MAX_INDEXED_FILES = 120;
+const MAX_INDEXED_FILE_BYTES = 60_000;
+const MAX_INDEXED_BYTES = 650_000;
+
+const supportedFiles = /(^|\/)(Dockerfile|Makefile|README(?:\.[^/]+)?|package\.json|tsconfig\.json)$|\.(?:c|cc|cpp|cs|css|go|graphql|gql|h|hpp|html|java|js|jsx|json|kt|kts|md|mdx|php|prisma|py|rb|rs|scss|sh|sql|svelte|swift|toml|ts|tsx|vue|xml|yaml|yml)$/i;
+const excludedPaths = /(^|\/)(?:\.git|\.next|\.nuxt|\.output|build|coverage|dist|node_modules|target|vendor)(\/|$)|(^|\/)(?:package-lock\.json|npm-shrinkwrap\.json|pnpm-lock\.yaml)$|(?:\.lock|\.min\.js|\.map)$/i;
+
+export type SourceFileEntry = { path: string; size: number };
+
 export function parseGitHubRepositoryUrl(value: string): GitHubRepositoryRef {
+  const trimmed = value.trim();
+  const withHost = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/.test(trimmed) ? `github.com/${trimmed}` : trimmed;
+  const withProtocol = /^(?:www\.)?github\.com\//i.test(withHost) ? `https://${withHost}` : withHost;
   let url: URL;
   try {
-    url = new URL(value.trim());
+    url = new URL(withProtocol);
   } catch {
     throw new Error("Enter a valid GitHub repository URL.");
   }
 
-  if (url.protocol !== "https:" || url.hostname.toLowerCase() !== "github.com" || url.username || url.password) {
+  if (url.protocol !== "https:" || !["github.com", "www.github.com"].includes(url.hostname.toLowerCase()) || url.username || url.password) {
     throw new Error("Use a public https://github.com repository URL.");
   }
 
@@ -66,20 +78,65 @@ export function languageForPath(path: string) {
   return languages[extension ?? ""] ?? "Text";
 }
 
-export function selectCandidatePaths(question: string, paths: string[], limit = 14) {
-  const ignored = new Set(["a", "about", "and", "are", "does", "file", "files", "for", "how", "in", "is", "it", "of", "the", "this", "to", "what", "where", "which"]);
-  const tokens = question.toLowerCase().match(/[a-z0-9]+/g)?.filter((token) => token.length > 1 && !ignored.has(token)) ?? [];
+export function selectCandidatePaths(question: string, files: Record<string, string>, limit = 14) {
+  const ignored = new Set(["a", "about", "an", "and", "are", "can", "do", "does", "file", "files", "for", "how", "in", "is", "it", "of", "on", "the", "this", "to", "what", "where", "which", "why", "with", "work", "works"]);
+  const tokens = [...new Set(question.toLowerCase().match(/[a-z0-9_]+/g)?.filter((token) => token.length > 1 && !ignored.has(token)) ?? [])];
+  const stems = tokens.map((token) => token.length > 4 ? token.replace(/(?:ies|es|s|ing|ed)$/, "") : token);
 
-  return paths
-    .map((path) => {
+  return Object.entries(files)
+    .map(([path, content]) => {
       const normalized = path.toLowerCase();
       const basename = normalized.split("/").pop() ?? normalized;
-      const tokenScore = tokens.reduce((score, token) => score + (normalized.includes(token) ? 12 : 0) + (basename.startsWith(token) ? 6 : 0), 0);
+      const text = content.toLowerCase();
+      const pathScore = stems.reduce((score, stem) => score + (normalized.includes(stem) ? 12 : 0) + (basename.startsWith(stem) ? 6 : 0), 0);
+      const contentScore = stems.reduce((score, stem) => score + Math.min(countOccurrences(text, stem), 5), 0);
       const landmarkScore = /(^|\/)(readme|package\.json|tsconfig\.json|dockerfile|makefile|index\.|main\.|page\.|route\.)/i.test(path) ? 5 : 0;
       const sourceScore = /^(src|app|lib|packages)\//.test(path) ? 2 : 0;
-      return { path, score: tokenScore + landmarkScore + sourceScore };
+      return { path, score: pathScore + contentScore + landmarkScore + sourceScore };
     })
     .sort((a, b) => b.score - a.score || a.path.localeCompare(b.path))
     .slice(0, limit)
     .map(({ path }) => path);
+}
+
+function countOccurrences(text: string, term: string) {
+  let count = 0;
+  for (let index = text.indexOf(term); index !== -1 && count < 5; index = text.indexOf(term, index + term.length)) count += 1;
+  return count;
+}
+
+export function selectSourceFiles(entries: SourceFileEntry[]) {
+  const candidates = entries
+    .filter(({ path, size }) => supportedFiles.test(path) && !excludedPaths.test(path) && size <= MAX_INDEXED_FILE_BYTES)
+    .sort((a, b) => sourcePriority(a.path) - sourcePriority(b.path) || depth(a.path) - depth(b.path) || a.size - b.size || a.path.localeCompare(b.path));
+
+  const selected: SourceFileEntry[] = [];
+  let selectedBytes = 0;
+  for (const candidate of candidates) {
+    if (selected.length >= MAX_INDEXED_FILES) break;
+    if (selectedBytes + candidate.size > MAX_INDEXED_BYTES) continue;
+    selected.push(candidate);
+    selectedBytes += candidate.size;
+  }
+
+  return { selected, candidateCount: candidates.length };
+}
+
+function sourcePriority(path: string) {
+  if (/^(?:package\.json|README(?:\.[^/]+)?|Dockerfile|Makefile|tsconfig\.json)$/i.test(path)) return 0;
+  if (/^(?:src|app|lib|packages)\//.test(path)) return 1;
+  if (/(?:^|\/)(?:test|tests|spec|__tests__)(?:\/|$)/i.test(path)) return 3;
+  return 2;
+}
+
+function depth(path: string) {
+  return path.split("/").length;
+}
+
+export function resolveRepositoryPath(reference: string, paths: string[]) {
+  const candidate = reference.trim().replace(/^\.?\//, "").replace(/(?::\d+){1,2}$|#L\d+(?:-L?\d+)?$/, "");
+  if (!candidate || candidate.includes(" ")) return null;
+  if (paths.includes(candidate)) return candidate;
+  const matches = paths.filter((path) => path.endsWith(`/${candidate}`));
+  return matches.length === 1 ? matches[0] : null;
 }

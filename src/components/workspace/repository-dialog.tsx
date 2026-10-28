@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useRepositoryIndexer } from "@/hooks/use-repository-indexer";
 import type { RepositorySnapshot } from "@/types/workspace";
 
 type RepositoryDialogProps = {
@@ -24,41 +25,28 @@ type RepositoryDialogProps = {
 
 export function RepositoryDialog({ open, onOpenChange, onIndexed }: RepositoryDialogProps) {
   const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { index, loading, error, clearError } = useRepositoryIndexer(onIndexed);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!url.trim() || loading) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/repositories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      const payload = (await response.json()) as { repository?: RepositorySnapshot; error?: string };
-      if (!response.ok || !payload.repository) throw new Error(payload.error ?? "The repository could not be indexed.");
-      onIndexed(payload.repository);
+    if (await index(url)) {
       setUrl("");
       onOpenChange(false);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "The repository could not be indexed.");
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => {
+      if (loading) return;
+      if (!next) clearError();
+      onOpenChange(next);
+    }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-secondary"><GitFork className="size-5" /></div>
           <DialogTitle>Add a GitHub repository</DialogTitle>
           <DialogDescription>
-            CodeScout will read a bounded snapshot of supported source files from the default branch.
+            CodeScout reads up to 120 source files from the latest commit on the default branch.
           </DialogDescription>
         </DialogHeader>
 
@@ -66,10 +54,12 @@ export function RepositoryDialog({ open, onOpenChange, onIndexed }: RepositoryDi
           <Input
             value={url}
             onChange={(event) => setUrl(event.target.value)}
-            placeholder="https://github.com/owner/repository"
+            placeholder="github.com/owner/repository"
             aria-label="GitHub repository URL"
-            className="h-11"
+            className="h-11 text-base sm:text-sm"
             autoFocus
+            spellCheck={false}
+            autoCapitalize="none"
           />
           {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
           <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
