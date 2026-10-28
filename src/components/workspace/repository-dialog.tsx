@@ -1,8 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { GitFork, LockKeyhole, Plus, ScanLine } from "@/components/ui/icons";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { GitFork, Plus, TriangleAlertIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,10 +42,10 @@ export function RepositoryDialog({ open, onOpenChange, onIndexed }: RepositoryDi
     }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <div className="mb-2 flex size-10 items-center justify-center rounded-xl bg-secondary"><GitFork className="size-5" /></div>
+          <div className="mb-2 flex size-11 items-center justify-center rounded-[13px] bg-secondary text-card-foreground"><GitFork className="size-5" /></div>
           <DialogTitle>Add a GitHub repository</DialogTitle>
           <DialogDescription>
-            CodeScout reads up to 120 source files from the latest commit on the default branch.
+            CodeScout reads up to 120 source files from the latest commit on the default branch. Public repositories only.
           </DialogDescription>
         </DialogHeader>
 
@@ -56,16 +55,12 @@ export function RepositoryDialog({ open, onOpenChange, onIndexed }: RepositoryDi
             onChange={(event) => setUrl(event.target.value)}
             placeholder="github.com/owner/repository"
             aria-label="GitHub repository URL"
-            className="h-11 text-base sm:text-sm"
+            className="h-11 rounded-xl text-base sm:text-sm"
             autoFocus
             spellCheck={false}
             autoCapitalize="none"
           />
-          {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
-          <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-            <div className="flex items-center gap-2 rounded-lg bg-secondary/65 p-2.5"><ScanLine className="size-3.5" /> Source and config files</div>
-            <div className="flex items-center gap-2 rounded-lg bg-secondary/65 p-2.5"><LockKeyhole className="size-3.5" /> Public repositories only</div>
-          </div>
+          {error && <p key={error} role="alert" className="flex animate-enter items-start gap-1.5 text-[13px] text-destructive"><TriangleAlertIcon className="mt-0.5 size-3.5 shrink-0" />{error}</p>}
         </form>
 
         <DialogFooter>

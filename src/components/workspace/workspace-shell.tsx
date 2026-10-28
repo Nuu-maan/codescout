@@ -5,9 +5,7 @@ import { Braces, KeyRound, Plus } from "@/components/ui/icons";
 import { toast } from "sonner";
 import { AnalysisWorkspace } from "@/components/query/analysis-workspace";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { CodeViewer } from "@/components/workspace/code-viewer";
@@ -60,25 +58,23 @@ export function WorkspaceShell() {
 
   return (
     <div className="flex h-dvh min-h-[40rem] flex-col overflow-hidden bg-background">
-      <header className="flex h-14 shrink-0 items-center border-b bg-card px-3 sm:px-4">
+      <header className="flex h-14 shrink-0 items-center px-4 sm:px-5">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Braces className="size-4" strokeWidth={2.25} /></div>
-          <span className="text-sm font-semibold tracking-[-0.02em]">CodeScout</span>
-          <Badge variant="secondary" className="hidden font-mono text-[9px] sm:inline-flex">REPOSITORY INTELLIGENCE</Badge>
+          <div className="flex size-7 items-center justify-center rounded-[9px] bg-primary text-primary-foreground"><Braces className="size-3.5" strokeWidth={2.25} /></div>
+          <span className="text-sm font-medium text-card-foreground">CodeScout</span>
         </div>
 
-        <div className="ms-auto flex items-center gap-1.5">
-          <Badge variant="outline" className="gap-1.5 px-2 font-normal text-muted-foreground">
-            <span className={`size-1.5 rounded-full ${pipelineStatus === null ? "bg-muted-foreground" : pipelineStatus.available ? "bg-emerald-500" : "bg-destructive"}`} />
+        <div className="ms-auto flex items-center gap-1">
+          <span className="me-1 inline-flex h-7 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-card-foreground md:bg-secondary md:px-2.5">
+            <span className={`size-1.5 rounded-full transition-colors duration-300 ${pipelineStatus === null ? "bg-muted-foreground/50" : pipelineStatus.available ? "bg-success" : "bg-destructive"}`} />
             <span className="hidden md:inline">{getPipelineLabel(pipelineStatus)}</span>
-          </Badge>
-          <Separator orientation="vertical" className="mx-1 hidden h-5 sm:block" />
+          </span>
           <ThemeToggle />
           <Tooltip>
-            <TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className={openRouterKey ? "text-emerald-600 dark:text-emerald-400" : undefined} aria-label="OpenRouter API key" onClick={() => setOpenRouterKeyDialogOpen(true)}><KeyRound /></Button></TooltipTrigger>
+            <TooltipTrigger asChild><Button variant="ghost" size="icon-sm" className={openRouterKey ? "text-success" : undefined} aria-label="OpenRouter API key" onClick={() => setOpenRouterKeyDialogOpen(true)}><KeyRound /></Button></TooltipTrigger>
             <TooltipContent>{openRouterKey ? "Personal OpenRouter key active" : "Add your OpenRouter key"}</TooltipContent>
           </Tooltip>
-          {repository && <Button size="sm" className="pressable gap-1.5" onClick={() => setRepositoryDialogOpen(true)}><Plus className="size-3.5" /><span className="hidden sm:inline">Add repository</span></Button>}
+          {repository && <Button size="sm" className="ms-1 gap-1.5" onClick={() => setRepositoryDialogOpen(true)}><Plus className="size-3.5" /><span className="hidden sm:inline">Add repository</span></Button>}
         </div>
       </header>
 

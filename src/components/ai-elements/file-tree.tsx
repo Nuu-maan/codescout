@@ -34,8 +34,8 @@ export function FileTree({ nodes, selectedPath, onSelect, depth = 0 }: FileTreeP
             role="treeitem"
             aria-selected={selectedPath === node.path}
             className={cn(
-              "h-8 w-full justify-start gap-2 rounded-md px-2 font-normal text-muted-foreground",
-              selectedPath === node.path && "bg-accent text-foreground",
+              "h-8 w-full justify-start gap-2 rounded-[10px] px-2 font-normal text-muted-foreground active:not-aria-[haspopup]:scale-[0.98]",
+              selectedPath === node.path && "bg-secondary text-card-foreground",
             )}
             style={{ paddingInlineStart: `${depth * 14 + 8}px` }}
             onClick={() => onSelect(node.path)}
@@ -55,7 +55,7 @@ function FolderRow({ node, selectedPath, onSelect, depth }: Omit<FileTreeProps, 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger
-        className="flex h-8 w-full items-center gap-1.5 rounded-md px-2 text-sm text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex h-8 w-full items-center gap-1.5 rounded-[10px] px-2 text-sm text-muted-foreground outline-none transition-colors duration-150 hover:bg-accent hover:text-card-foreground focus-visible:ring-2 focus-visible:ring-ring"
         style={{ paddingInlineStart: `${depth * 14 + 6}px` }}
       >
         <ChevronRight className={cn("size-3 transition-transform duration-150", open && "rotate-90")} />

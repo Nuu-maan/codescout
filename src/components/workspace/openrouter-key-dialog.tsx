@@ -36,7 +36,7 @@ export function OpenRouterKeyDialog({ initialKey, open, onOpenChange, onSave }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <div className="flex size-9 items-center justify-center rounded-lg bg-secondary"><KeyRound className="size-4" /></div>
+          <div className="mb-2 flex size-11 items-center justify-center rounded-[13px] bg-secondary text-card-foreground"><KeyRound className="size-5" /></div>
           <DialogTitle>Use your OpenRouter key</DialogTitle>
           <DialogDescription>Your key is saved only in this browser and sent with repository questions. It is never added to GitHub or synced to CodeScout.</DialogDescription>
         </DialogHeader>
@@ -53,14 +53,14 @@ export function OpenRouterKeyDialog({ initialKey, open, onOpenChange, onSave }: 
               placeholder="sk-or-v1-…"
               autoComplete="off"
               spellCheck={false}
-              className="h-10 pe-10 font-mono text-xs"
+              className="h-10 rounded-xl pe-10 font-mono text-base sm:text-xs"
               aria-label="OpenRouter API key"
             />
-            <Button type="button" variant="ghost" size="icon-sm" className="absolute end-1 top-1" onClick={() => setVisible((current) => !current)} aria-label={visible ? "Hide API key" : "Show API key"}>
+            <Button type="button" variant="ghost" size="icon-sm" className="absolute end-1.5 top-1.5" onClick={() => setVisible((current) => !current)} aria-label={visible ? "Hide API key" : "Show API key"}>
               {visible ? <EyeOff /> : <Eye />}
             </Button>
           </div>
-          {trimmedValue && !valid && <p className="text-xs text-destructive">Enter a valid OpenRouter key beginning with sk-or-v1-.</p>}
+          {trimmedValue && !valid && <p className="animate-enter text-xs text-destructive">Enter a valid OpenRouter key beginning with sk-or-v1-.</p>}
           <p className="text-xs text-muted-foreground">Remove it before using CodeScout on a shared computer.</p>
         </div>
 
